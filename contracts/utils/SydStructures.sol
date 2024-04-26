@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity 0.8.19;
 
 library SydStructures {
     uint8 internal constant DISTRIBUTE_TO_PARTICIPANTS = 0;
