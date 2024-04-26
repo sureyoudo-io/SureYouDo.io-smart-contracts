@@ -3,6 +3,7 @@
 pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SydCharityManager, ISydCharityManager} from "./SydCharityManager.sol";
 import {Ownable} from "./utils/Ownable.sol";
@@ -12,6 +13,8 @@ import {SydStructures} from "./utils/SydStructures.sol";
 import {ISYDToken} from "./SydToken.sol";
 
 contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
+    using SafeERC20 for ERC20;
+    
     error CheckInPeriodExceedsChallengeDuration();
     error ERC20TokenLockFailed();
     error EventAlreadyFinalized();
@@ -747,11 +750,7 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
 
     function _lockERC20Token(uint64 challengeId, address tokenToLock, uint256 valuePromised) internal {
         lockedTokens[challengeId][msg.sender] = tokenToLock;
-
-        bool success = ERC20(tokenToLock).transferFrom(msg.sender, address(this), valuePromised);
-        if (!success) {
-            revert ERC20TokenLockFailed();
-        }
+        ERC20(tokenToLock).safeTransferFrom(msg.sender, address(this), valuePromised);
     }
 
     function _cancelChallengeLock(address user, uint64 challengeId) internal {
@@ -919,10 +918,7 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
         if (amount == 0) {
             revert NoAmountToTransfer();
         }
-        bool success = ERC20(tokenAddress).transfer(recipient, amount);
-        if (!success) {
-            revert ERC20TokenLockFailed();
-        }
+        ERC20(tokenAddress).safeTransfer(recipient, amount);
     }
 
     function _sendChallengeVerifierReward(address verifierAddress) internal {
