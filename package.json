@@ -24,6 +24,7 @@
     "dev-node": "hardhat node",
     "compile": "hardhat compile",
     "test": "hardhat test",
+    "test:ci": "wait-on tcp:localhost:8545 && npm run test",
     "solhint": "solhint 'contracts/**/*.sol'",
     "prettier": "prettier --write .",
     "lint": "eslint . && npm run solhint",
@@ -36,8 +37,8 @@
     "chai": "^4.4.1",
     "dotenv": "^16.4.5",
     "hardhat": "^2.20.1",
-    "hardhat-gas-reporter": "^1.0.10",
-    "hardhat-contract-sizer": "^2.10.0"
+    "hardhat-contract-sizer": "^2.10.0",
+    "hardhat-gas-reporter": "^1.0.10"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
@@ -50,6 +51,7 @@
     "eslint-plugin-prettier": "^5.1.3",
     "prettier": "^3.2.5",
     "prettier-plugin-solidity": "^1.3.1",
-    "solhint": "^4.1.1"
+    "solhint": "^4.1.1",
+    "wait-on": "^7.2.0"
   }
 }

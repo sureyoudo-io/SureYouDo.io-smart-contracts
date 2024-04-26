@@ -6,21 +6,23 @@ import "hardhat-contract-sizer";
 
 dotenv.config();
 
+let amoy;
+
+// If not running in GitHub Actions, add the Amoy network
 if (
-  !process.env.POLYGON_AMOY_RPC_URL ||
-  !process.env.POLYGON_AMOY_PRIVATE_KEY
+  !process.env.GITHUB_ACTIONS &&
+  process.env.POLYGON_AMOY_RPC_URL &&
+  process.env.POLYGON_AMOY_PRIVATE_KEY
 ) {
-  throw new Error("Please set your environment variables");
+  amoy = {
+    url: process.env.POLYGON_AMOY_RPC_URL,
+    accounts: [process.env.POLYGON_AMOY_PRIVATE_KEY],
+  };
 }
 
 const config: HardhatUserConfig = {
   defaultNetwork: "localhost",
-  networks: {
-    amoy: {
-      url: process.env.POLYGON_AMOY_RPC_URL,
-      accounts: [process.env.POLYGON_AMOY_PRIVATE_KEY],
-    },
-  },
+  networks: amoy ? { amoy } : {},
   solidity: {
     version: "0.8.24",
     settings: {

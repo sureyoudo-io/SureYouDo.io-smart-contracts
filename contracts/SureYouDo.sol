@@ -14,7 +14,7 @@ import {ISYDToken} from "./SydToken.sol";
 
 contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     using SafeERC20 for ERC20;
-    
+
     error CheckInPeriodExceedsChallengeDuration();
     error ERC20TokenLockFailed();
     error EventAlreadyFinalized();
