@@ -391,7 +391,7 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
      * @notice Cancels a challenge by creator.
      * @param challengeId The challenge id.
      */
-    function cancelChallenge(uint64 challengeId) external {
+    function cancelChallenge(uint64 challengeId) external nonReentrant {
         if (lockTimes[challengeId][msg.sender] == 0) {
             revert NoLockedValue();
         }
