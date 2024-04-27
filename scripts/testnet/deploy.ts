@@ -50,7 +50,7 @@ async function main() {
   await syd.setSydTokenAddress(sydToken.target);
 
   // add SYD token to allowed tokens to lock value
-  await syd.addAllowedToken(syd.target, true);
+  await syd.addAllowedToken(sydToken.target, false);
 
   // update max participants
   await syd.updateMaxParticipants(MAX_PARTICIPANTS);
