@@ -13,8 +13,8 @@ contract AllowedTokensManager is Ownable {
     error ATM_TokenAlreadyAdded();
     error ATM_TokenDoesNotExist();
 
-    mapping(address => bool) internal _allowedTokens;
-    mapping(address => bool) internal _proAccountAllowedOnlyTokens;
+    mapping(address => bool) public allowedTokens;
+    mapping(address => bool) public proAccountAllowedOnlyTokens;
 
     event AllowedTokenAdded(address indexed tokenAddress);
     event AllowedTokenRemoved(address indexed tokenAddress);
@@ -34,12 +34,12 @@ contract AllowedTokensManager is Ownable {
         if (tokenAddress == address(0)) {
             revert ATM_InvalidTokenAddress();
         }
-        if (_allowedTokens[tokenAddress]) {
+        if (allowedTokens[tokenAddress]) {
             revert ATM_TokenAlreadyAdded();
         }
-        _allowedTokens[tokenAddress] = true;
+        allowedTokens[tokenAddress] = true;
         if (proAccountOnly) {
-            _proAccountAllowedOnlyTokens[tokenAddress] = true;
+            proAccountAllowedOnlyTokens[tokenAddress] = true;
         }
         emit AllowedTokenAdded(tokenAddress);
     }
@@ -49,11 +49,11 @@ contract AllowedTokensManager is Ownable {
      * @param tokenAddress The address of the token to be removed.
      */
     function removeAllowedToken(address tokenAddress) external onlyOwner {
-        if (!_allowedTokens[tokenAddress] || tokenAddress == address(0)) {
+        if (!allowedTokens[tokenAddress] || tokenAddress == address(0)) {
             revert ATM_TokenDoesNotExist();
         }
-        delete _allowedTokens[tokenAddress];
-        delete _proAccountAllowedOnlyTokens[tokenAddress];
+        delete allowedTokens[tokenAddress];
+        delete proAccountAllowedOnlyTokens[tokenAddress];
         emit AllowedTokenRemoved(tokenAddress);
     }
 
@@ -63,13 +63,13 @@ contract AllowedTokensManager is Ownable {
      * @param proAccountOnly The new status of the token.
      */
     function updateProAccountOnlyToken(address tokenAddress, bool proAccountOnly) external onlyOwner {
-        if (!_allowedTokens[tokenAddress] || tokenAddress == address(0)) {
+        if (!allowedTokens[tokenAddress] || tokenAddress == address(0)) {
             revert ATM_TokenDoesNotExist();
         }
         if (proAccountOnly) {
-            _proAccountAllowedOnlyTokens[tokenAddress] = true;
+            proAccountAllowedOnlyTokens[tokenAddress] = true;
         } else {
-            delete _proAccountAllowedOnlyTokens[tokenAddress];
+            delete proAccountAllowedOnlyTokens[tokenAddress];
         }
     }
 
@@ -80,10 +80,10 @@ contract AllowedTokensManager is Ownable {
      * @return bool Returns true if the token is allowed, false otherwise.
      */
     function _isTokenAllowed(address tokenAddress) internal view returns (bool) {
-        return _allowedTokens[tokenAddress];
+        return allowedTokens[tokenAddress];
     }
 
     function _isProAccountOnlyToken(address tokenAddress) internal view returns (bool) {
-        return _proAccountAllowedOnlyTokens[tokenAddress];
+        return proAccountAllowedOnlyTokens[tokenAddress];
     }
 }
