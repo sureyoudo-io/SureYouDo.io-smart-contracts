@@ -98,6 +98,7 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     mapping(address => mapping(uint256 => uint256)) private _holdersLockedAmounts;
 
     uint8 public maxParticipants; // Max 255 with creator included
+    uint8 public maxParticipantsProAccount; // Max 255 with creator included
     uint32 public minPlatformCommission;
     uint32 public minPlatformCommissionProAccount;
     uint256 public minimumProAccountBalance;
@@ -127,6 +128,7 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
 
     function initialize(address _charityManagerAddress, address _challengeManagerAddress) external onlyOwner {
         maxParticipants = 2;
+        maxParticipantsProAccount = 4;
         minPlatformCommission = 0; // 0% commission for normal accounts
         minPlatformCommissionProAccount = 0; // 0% commission for pro accounts
         minimumProAccountBalance = 10 ether;
@@ -151,12 +153,19 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     /**
      * @notice Updates the maximum number of participants allowed in a challenge.
      * @param newMaxParticipants The new maximum number of participants.
+     * @param newMaxParticipantsProAccount The new maximum number of participants for pro accounts.
      */
-    function updateMaxParticipants(uint8 newMaxParticipants) external onlyOwner {
-        if (newMaxParticipants < 2) {
+    function updateMaxParticipants(uint8 newMaxParticipants, uint8 newMaxParticipantsProAccount) external onlyOwner {
+        if (newMaxParticipants < 2 || newMaxParticipants > newMaxParticipantsProAccount) {
             revert InvalidMaxParticipants();
         }
-        maxParticipants = newMaxParticipants;
+        if (newMaxParticipants != maxParticipants) {
+            maxParticipants = newMaxParticipants;
+        }
+
+        if (newMaxParticipantsProAccount != maxParticipantsProAccount) {
+            maxParticipantsProAccount = newMaxParticipantsProAccount;
+        }
     }
 
     /**
@@ -279,7 +288,7 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
         }
 
         // double the participants for pro accounts
-        uint256 maxAllowedParticipants = isProAccount ? maxParticipants * 2 : maxParticipants;
+        uint256 maxAllowedParticipants = isProAccount ? maxParticipantsProAccount : maxParticipants;
         if (otherParticipants.length >= maxAllowedParticipants) {
             revert ChallengeParticipantsExceedMaximum();
         }

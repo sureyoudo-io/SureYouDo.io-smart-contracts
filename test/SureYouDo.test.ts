@@ -12,6 +12,8 @@ import {
 
 const DAY_IN_SECONDS = 86400;
 const COMMISSION_PRECISION = 10_000n;
+const defaultMaxParticipants = 3;
+const defaultMaxParticipantsProAccount = 6;
 
 enum PenaltyType {
   DISTRIBUTE_TO_PARTICIPANTS,
@@ -351,14 +353,18 @@ describe("SureYouDo", () => {
   describe("Update max participants", () => {
     it("Should update max participants", async () => {
       const { sureYouDo } = await loadFixture(deployContracts);
-      await sureYouDo.updateMaxParticipants(3);
+      await sureYouDo.updateMaxParticipants(
+        defaultMaxParticipants,
+        defaultMaxParticipantsProAccount,
+      );
       expect(await sureYouDo.maxParticipants()).to.equal(3);
+      expect(await sureYouDo.maxParticipantsProAccount()).to.equal(6);
     });
 
     it("Should revert when max participants is less than 2", async () => {
       const { sureYouDo } = await loadFixture(deployContracts);
       await expect(
-        sureYouDo.updateMaxParticipants(1),
+        sureYouDo.updateMaxParticipants(1, 2),
       ).to.be.revertedWithCustomError(sureYouDo, "InvalidMaxParticipants");
     });
   });
@@ -1136,7 +1142,10 @@ describe("SureYouDo", () => {
             await loadFixture(deployContracts);
 
           // set maxParticipants to 3
-          await sureYouDo.updateMaxParticipants(3);
+          await sureYouDo.updateMaxParticipants(
+            defaultMaxParticipants,
+            defaultMaxParticipantsProAccount,
+          );
 
           await createChallengeWith(sureYouDo, {
             otherParticipants: [addr2.address, addr3.address],
@@ -1399,7 +1408,10 @@ describe("SureYouDo", () => {
           } = await loadFixture(deployContracts);
 
           // update maxParticipants to 3
-          await sureYouDo.updateMaxParticipants(3);
+          await sureYouDo.updateMaxParticipants(
+            defaultMaxParticipants,
+            defaultMaxParticipantsProAccount,
+          );
 
           // add tstToken to allowed-tokens list
           await sureYouDo.addAllowedToken(tstToken.target, false);
@@ -1549,7 +1561,10 @@ describe("SureYouDo", () => {
           } = await loadFixture(deployContracts);
 
           // update maxParticipants to 3
-          await sureYouDo.updateMaxParticipants(3);
+          await sureYouDo.updateMaxParticipants(
+            defaultMaxParticipants,
+            defaultMaxParticipantsProAccount,
+          );
 
           await createChallengeWith(sureYouDo, {
             otherParticipants: [p2.address, p3.address],
@@ -1598,7 +1613,10 @@ describe("SureYouDo", () => {
           } = await loadFixture(deployContracts);
 
           // update maxParticipants to 3
-          await sureYouDo.updateMaxParticipants(3);
+          await sureYouDo.updateMaxParticipants(
+            defaultMaxParticipants,
+            defaultMaxParticipantsProAccount,
+          );
 
           await createChallengeWith(sureYouDo, {
             otherParticipants: [p2.address, p3.address],
@@ -1708,7 +1726,10 @@ describe("SureYouDo", () => {
           } = await loadFixture(deployContracts);
 
           // update maxParticipants to 3
-          await sureYouDo.updateMaxParticipants(3);
+          await sureYouDo.updateMaxParticipants(
+            defaultMaxParticipants,
+            defaultMaxParticipantsProAccount,
+          );
 
           // add token to the allowed-tokens list
           await sureYouDo.addAllowedToken(tstToken.target, false);
@@ -1789,7 +1810,10 @@ describe("SureYouDo", () => {
           } = await loadFixture(deployContracts);
 
           // update maxParticipants to 3
-          await sureYouDo.updateMaxParticipants(3);
+          await sureYouDo.updateMaxParticipants(
+            defaultMaxParticipants,
+            defaultMaxParticipantsProAccount,
+          );
 
           // add token to the allowed-tokens list
           await sureYouDo.addAllowedToken(tstToken.target, false);
@@ -3171,7 +3195,10 @@ describe("SureYouDo", () => {
           } = await loadFixture(deployContracts);
 
           // update maxParticipants to 3
-          await sureYouDo.updateMaxParticipants(3);
+          await sureYouDo.updateMaxParticipants(
+            defaultMaxParticipants,
+            defaultMaxParticipantsProAccount,
+          );
 
           await createChallengeWith(sureYouDo, {
             checkInPeriod: 0,
@@ -3427,7 +3454,10 @@ describe("SureYouDo", () => {
           } = await loadFixture(deployContracts);
 
           // update maxParticipants to 3
-          await sureYouDo.updateMaxParticipants(3);
+          await sureYouDo.updateMaxParticipants(
+            defaultMaxParticipants,
+            defaultMaxParticipantsProAccount,
+          );
 
           // add tstToken to allowed-tokens list
           await sureYouDo.addAllowedToken(tstToken.target, false);
