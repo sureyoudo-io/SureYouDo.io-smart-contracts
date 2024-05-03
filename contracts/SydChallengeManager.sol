@@ -22,6 +22,7 @@ contract SydChallengeManager is Ownable {
     error NotEligibleToVerify();
     error NotAllParticipantsHaveCheckedIn();
     error InvalidParticipantsCount();
+    error CooldownTimeNotElapsed();
 
     struct Verifier {
         address verifierAddress;
@@ -41,6 +42,8 @@ contract SydChallengeManager is Ownable {
     mapping(address => uint256[]) internal _userChallenges;
     mapping(address => uint256[]) internal _verifierChallenges;
     // Challenge data structure ends
+
+    uint256 public challengeCreationCooldownTime = 30 minutes;
 
     event ChallengeStarted(uint64 indexed challengeId);
 
@@ -74,6 +77,14 @@ contract SydChallengeManager is Ownable {
         uint32 platformCommissionPercentage,
         address tokenToLock
     ) external onlyMainContract returns (uint64) {
+        uint256 lastChallengeCreatedAt = _userChallenges[creator].length > 0
+            ? _challenges[_userChallenges[creator][_userChallenges[creator].length - 1]].createdAt
+            : 0;
+
+        if (block.timestamp - lastChallengeCreatedAt < challengeCreationCooldownTime) {
+            revert CooldownTimeNotElapsed();
+        }
+
         uint64 id = uint64(_challenges.length);
 
         address[] memory joinedParticipants = new address[](1);
@@ -123,6 +134,16 @@ contract SydChallengeManager is Ownable {
         }
 
         return id;
+    }
+
+    /**
+     * @dev Sets the challenge creation cooldown time.
+     * @param cooldownTime The cooldown time in minutes.
+     */
+    function setChallengeCreationCooldownTime(uint256 cooldownTime) external onlyOwner {
+        if (cooldownTime != challengeCreationCooldownTime) {
+            challengeCreationCooldownTime = cooldownTime;
+        }
     }
 
     /**
@@ -391,6 +412,7 @@ contract SydChallengeManager is Ownable {
 
 interface ISydChallengeManager {
     function initialize(address owner, address mainContract) external;
+
     function addChallenge(
         address creator,
         string calldata title,
@@ -404,28 +426,41 @@ interface ISydChallengeManager {
         uint32 platformCommissionPercentage,
         address tokenToLock
     ) external returns (uint64);
+
     function addParticipantToChallenge(uint64 challengeId, address participant) external returns (bool);
+
     function getChallenge(
         uint64 challengeId
     ) external view returns (ISydChallengeManager.Challenge memory, address, address, address);
+
     function getChallenges() external view returns (ISydChallengeManager.Challenge[] memory);
+
     function getChallengeParticipant(
         uint256 challengeId,
         address participant
     ) external view returns (bool, uint256, bool, uint256, uint256);
+
     function getParticipantCheckInCount(uint256 challengeId, address participant) external view returns (uint256);
+
     function getChallengesCount() external view returns (uint256);
+
     function getPlatformCommission(uint64 challengeId) external view returns (uint256);
+
     function cancelChallenge(uint256 challengeId) external;
+
     function addCheckIn(uint64 challengeId, address participantAddress) external returns (bool);
+
     function finalizeChallenge(uint256 challengeId, address participantAddress) external returns (address[] memory);
+
     function verifyAndFinalizeChallenge(
         uint256 challengeId,
         address verifierAddress,
         address[] calldata successfulParticipants,
         address[] calldata failedParticipants
     ) external returns (bool);
+
     function getUserChallenges(address user) external view returns (uint256[] memory);
+
     function getVerifierChallenges(address verifier) external view returns (uint256[] memory);
 
     struct Challenge {

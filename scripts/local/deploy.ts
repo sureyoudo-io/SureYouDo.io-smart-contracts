@@ -24,6 +24,7 @@ async function main() {
   // deploy the charity contract
   const CharityManager = await ethers.getContractFactory("SydCharityManager");
   const charityManager = await CharityManager.deploy(owner.address, syd.target);
+  await charityManager.waitForDeployment();
 
   // deploy the challenge contract
   const ChallengeManager = await ethers.getContractFactory(
@@ -33,6 +34,7 @@ async function main() {
     owner.address,
     syd.target,
   );
+  await charityManager.waitForDeployment();
 
   // init syd contract
   await syd.initialize(charityManager.target, challengeManager.target);
@@ -61,7 +63,10 @@ async function main() {
   await syd.addAllowedToken(testToken.target, true);
 
   // update max participants
-  await syd.updateMaxParticipants(2);
+  await syd.updateMaxParticipants(2, 6);
+
+  // set the challenge creation cooldown time to 0 minutes on local
+  await challengeManager.setChallengeCreationCooldownTime(0);
 
   // update the min platform commission
   await syd.updateMinPlatformCommission(50, 1); // 0.5% and 0.01%
