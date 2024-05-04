@@ -59,8 +59,8 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
         uint256 finalizedAt;
         uint256 expectedSydLock;
         uint256 totalSydLocked;
-        uint64 enrollmentsCount;
         uint256 maxSydLockPerEnrollment;
+        uint64 enrollmentsCount;
         address targetToken; // 0x0 for Network Token
         uint256 totalValueToDistribute;
         uint256 finalValueToDistribute;
