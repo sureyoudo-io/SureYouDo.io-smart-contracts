@@ -429,11 +429,7 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
      * @param challengeId The challenge id.
      */
     function checkIn(uint64 challengeId) external nonReentrant {
-        bool isLastDay = challengeManager.addCheckIn(challengeId, msg.sender);
-
-        if (isLastDay) {
-            _finalizeCheckInRequiredValue(challengeId, msg.sender);
-        }
+        challengeManager.addCheckIn(challengeId, msg.sender);
 
         emit CheckInAdded(challengeId, msg.sender);
     }

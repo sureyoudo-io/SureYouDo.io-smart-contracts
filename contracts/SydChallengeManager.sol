@@ -257,9 +257,8 @@ contract SydChallengeManager is Ownable {
      * @dev Adds a check-in for a participant.
      * @param challengeId The id of the challenge.
      * @param participantAddress The address of the participant.
-     * @return bool True if the check-in is the last one, false otherwise.
      */
-    function addCheckIn(uint64 challengeId, address participantAddress) external onlyMainContract returns (bool) {
+    function addCheckIn(uint64 challengeId, address participantAddress) external onlyMainContract {
         SydStructures.Challenge storage challenge = _challenges[challengeId];
         if (challenge.startedAt == 0) {
             revert ChallengeNotStarted();
@@ -282,10 +281,6 @@ contract SydChallengeManager is Ownable {
 
         _challengeParticipantCheckIns[challengeId][participantAddress]++;
         _challengeParticipantLastCheckInTimes[challengeId][participantAddress] = block.timestamp;
-
-        bool isLastCheckInDay = currentDay + challenge.checkInPeriod >= goalDay;
-
-        return isLastCheckInDay;
     }
 
     /**
@@ -417,7 +412,7 @@ interface ISydChallengeManager {
     function getChallengesCount() external view returns (uint256);
     function getPlatformCommission(uint64 challengeId) external view returns (uint256);
     function cancelChallenge(uint256 challengeId) external;
-    function addCheckIn(uint64 challengeId, address participantAddress) external returns (bool);
+    function addCheckIn(uint64 challengeId, address participantAddress) external;
     function finalizeChallenge(uint256 challengeId, address participantAddress) external returns (address[] memory);
     function verifyAndFinalizeChallenge(
         uint256 challengeId,
