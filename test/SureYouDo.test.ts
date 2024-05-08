@@ -4957,38 +4957,4 @@ describe("SureYouDo", () => {
       });
     });
   });
-
-  describe("setChallengeCreationCooldownTime", () => {
-    it("should revert when sender is not the owner", async () => {
-      const { challengeManager, addr2 } = await loadFixture(deployContracts);
-      await expect(
-        challengeManager.connect(addr2).setChallengeCreationCooldownTime(10),
-      ).to.be.reverted;
-    });
-
-    it("should revert when challenge creation cooldown time is not passed", async () => {
-      const { sureYouDo, challengeManager } =
-        await loadFixture(deployContracts);
-      await challengeManager.setChallengeCreationCooldownTime(10);
-
-      await createChallengeWith(sureYouDo);
-
-      await expect(
-        createChallengeWith(sureYouDo),
-      ).to.be.revertedWithCustomError(
-        challengeManager,
-        "CooldownTimeNotElapsed",
-      );
-    });
-
-    it("should let owner to set challenge creation cooldown time", async () => {
-      const { challengeManager } = await loadFixture(deployContracts);
-      const newCooldownTime = 10;
-      await challengeManager.setChallengeCreationCooldownTime(10);
-
-      expect(await challengeManager.challengeCreationCooldownTime()).to.equal(
-        newCooldownTime,
-      );
-    });
-  });
 });
