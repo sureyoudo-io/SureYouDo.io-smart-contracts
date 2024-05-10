@@ -4,8 +4,10 @@ const TOTAL_SUPPLY = 1_000_000;
 const OWNER_SUPPLY = TOTAL_SUPPLY * 0.9;
 const SYD_REWARD_SUPPLY = TOTAL_SUPPLY * 0.1;
 const MAX_PARTICIPANTS = 2;
+const MAX_PARTICIPANTS_PRO_ACCOUNT = 4;
 const MIN_PLATFORM_COMMISSION = 50; // 0.5%
 const MIN_PLATFORM_COMMISSION_PRO_ACCOUNT = 1; // 0.01%
+const DAILY_REWARD_LIMIT = ethers.parseEther("10"); // 10 SYD
 
 const testCharityAddress = "0x24bbfc043cecC7C60ABDa9eb2a858CCb3Bd04Fa4";
 
@@ -53,13 +55,19 @@ async function main() {
   await syd.addAllowedToken(sydToken.target, false);
 
   // update max participants
-  await syd.updateMaxParticipants(MAX_PARTICIPANTS);
+  await syd.updateMaxParticipants(
+    MAX_PARTICIPANTS,
+    MAX_PARTICIPANTS_PRO_ACCOUNT,
+  );
 
   // update the min platform commission
   await syd.updateMinPlatformCommission(
     MIN_PLATFORM_COMMISSION,
     MIN_PLATFORM_COMMISSION_PRO_ACCOUNT,
   );
+
+  // update daily reward limit per wallet
+  await syd.updateDailyRewardLimitPerUser(DAILY_REWARD_LIMIT);
 
   // log as env file key maps
   console.log(`#-------------------------------------------------`);

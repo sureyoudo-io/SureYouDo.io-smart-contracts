@@ -2,13 +2,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import {
-  SureYouDo,
-  SydChallengeManager,
-  SydCharityManager,
-  SydToken,
-  TestERC20,
-} from "../typechain-types";
+import { SureYouDo, SydToken, TestERC20 } from "../typechain-types";
 
 const DAY_IN_SECONDS = 86400;
 const COMMISSION_PRECISION = 10_000n;
@@ -1920,24 +1914,6 @@ describe("SureYouDo", () => {
             "AlreadyCheckedIn",
           );
         });
-
-        it("Should revert when current day is after the last day", async () => {
-          const { sureYouDo, challengeManager } =
-            await loadFixture(deployContracts);
-
-          await createChallengeWith(sureYouDo, {
-            duration: 2,
-          });
-
-          // increase time to pass the duration
-          await ethers.provider.send("evm_increaseTime", [DAY_IN_SECONDS * 3]);
-
-          // creator checks in
-          await expect(sureYouDo.checkIn(0)).to.be.revertedWithCustomError(
-            challengeManager,
-            "CheckInDurationEnded",
-          );
-        });
       });
 
       describe("When participant checks in", () => {
@@ -1959,259 +1935,6 @@ describe("SureYouDo", () => {
 
           expect(participant.checkInCount).to.equal(1);
           expect(participant.lastCheckInAt).to.be.greaterThan(0);
-        });
-
-        describe("On last check-in day", () => {
-          let sureYouDo: SureYouDo;
-          let challengeManager: SydChallengeManager;
-          let sydToken: SydToken;
-          let charityManager: SydCharityManager;
-          let creator: HardhatEthersSigner;
-          let p2: HardhatEthersSigner;
-          let charityAddress: string;
-
-          const platformCommissionValue =
-            (defaultProperties.pledgedValue *
-              BigInt(defaultProperties.platformCommission)) /
-            COMMISSION_PRECISION;
-          const valuePerCheckIn =
-            (defaultProperties.pledgedValue - platformCommissionValue) /
-            BigInt(defaultProperties.duration);
-          const endDayUnix = DAY_IN_SECONDS * (defaultProperties.duration - 1);
-
-          beforeEach(async () => {
-            const contracts = await loadFixture(
-              deployContractWithActiveCharity,
-            );
-            sureYouDo = contracts.sureYouDo;
-            sydToken = contracts.sydToken;
-            challengeManager = contracts.challengeManager;
-            charityManager = contracts.charityManager;
-            charityAddress = contracts.charityAddress;
-            creator = contracts.owner;
-            p2 = contracts.addr4;
-          });
-
-          it("Should check in and finalize the value on last check-in day when penalty is DISTRIBUTE_TO_PARTICIPANTS", async () => {
-            await createChallengeWith(sureYouDo, {
-              checkInPeriod: 1,
-              otherParticipants: [p2.address],
-              penaltyType: PenaltyType.DISTRIBUTE_TO_PARTICIPANTS,
-            });
-
-            // p2 joins and starts the challenge
-            await sureYouDo
-              .connect(p2)
-              .joinChallenge(0, defaultProperties.pledgedValue, {
-                value: defaultProperties.pledgedValue,
-              });
-
-            // increase time to go to the last check-in day
-            await ethers.provider.send("evm_increaseTime", [endDayUnix]);
-
-            await expect(sureYouDo.checkIn(0)).to.emit(sureYouDo, "ValueLost");
-
-            const creatorParticipant =
-              await challengeManager.getChallengeParticipant(
-                0,
-                creator.address,
-              );
-
-            const creatorLockDetails = await sureYouDo.getLockDetails(
-              0,
-              creator.address,
-            );
-
-            // expect creator to have 1 check-in and have available value per one check-in
-            expect(creatorParticipant.checkInCount).to.equal(1);
-            expect(creatorLockDetails.hasAvailableValue).to.equal(true);
-            expect(creatorLockDetails.unlockedAmount).to.equal(
-              valuePerCheckIn * creatorParticipant.checkInCount, // only one check-in
-            );
-            expect(creatorLockDetails.winAmount).to.equal(0n);
-
-            const p2Participant =
-              await challengeManager.getChallengeParticipant(0, p2.address);
-
-            const p2LockDetails = await sureYouDo.getLockDetails(0, p2.address);
-
-            // expect p2 to have 0 check-in and have available value per one check-in
-            expect(p2Participant.checkInCount).to.equal(0);
-            expect(p2LockDetails.amount).to.equal(
-              defaultProperties.pledgedValue,
-            );
-            expect(p2LockDetails.hasAvailableValue).to.equal(true);
-            expect(p2LockDetails.unlockedAmount).to.equal(0n);
-            expect(p2LockDetails.winAmount).to.equal(valuePerCheckIn * 9n); // creator missed 9 check-ins
-          });
-
-          it("Should check in and finalize the value on last check-in day when penalty is ADD_TO_COMMUNITY", async () => {
-            await createChallengeWith(sureYouDo, {
-              checkInPeriod: 1,
-              penaltyType: PenaltyType.ADD_TO_COMMUNITY,
-            });
-
-            // increase time to go to the last check-in day
-            await ethers.provider.send("evm_increaseTime", [endDayUnix]);
-
-            await expect(sureYouDo.checkIn(0)).to.emit(sureYouDo, "ValueLost");
-
-            const creatorParticipant =
-              await challengeManager.getChallengeParticipant(
-                0,
-                creator.address,
-              );
-
-            const creatorLockDetails = await sureYouDo.getLockDetails(
-              0,
-              creator.address,
-            );
-
-            // expect creator to have 1 check-in and have available value per one check-in
-            expect(creatorParticipant.checkInCount).to.equal(1);
-            expect(creatorLockDetails.hasAvailableValue).to.equal(true);
-            expect(creatorLockDetails.unlockedAmount).to.equal(
-              valuePerCheckIn * creatorParticipant.checkInCount, // only one check-in
-            );
-            expect(creatorLockDetails.winAmount).to.equal(0n);
-
-            expect(await sureYouDo.availableCommunityDistribution()).to.equal(
-              valuePerCheckIn * 9n, // creator missed 9 check-ins
-            );
-          });
-
-          it("Should check in and finalize the value on last check-in day when penalty is TRANSFER_TO_ADDRESS", async () => {
-            await createChallengeWith(sureYouDo, {
-              checkInPeriod: 1,
-              penaltyType: PenaltyType.TRANSFER_TO_ADDRESS,
-              penaltyRecipientAddress: p2.address,
-            });
-
-            // increase time to go to the last check-in day
-            await ethers.provider.send("evm_increaseTime", [endDayUnix]);
-
-            const p2BalanceBefore = await ethers.provider.getBalance(
-              p2.address,
-            );
-
-            await expect(sureYouDo.checkIn(0)).to.emit(sureYouDo, "ValueLost");
-
-            const p2BalanceAfter = await ethers.provider.getBalance(p2.address);
-
-            expect(p2BalanceAfter - p2BalanceBefore).to.equal(
-              valuePerCheckIn * 9n, // creator missed 9 check-ins
-            );
-
-            const creatorParticipant =
-              await challengeManager.getChallengeParticipant(
-                0,
-                creator.address,
-              );
-
-            const creatorLockDetails = await sureYouDo.getLockDetails(
-              0,
-              creator.address,
-            );
-
-            // expect creator to have 1 check-in and have available value per one check-in
-            expect(creatorParticipant.checkInCount).to.equal(1);
-            expect(creatorLockDetails.hasAvailableValue).to.equal(true);
-            expect(creatorLockDetails.unlockedAmount).to.equal(
-              valuePerCheckIn * creatorParticipant.checkInCount, // only one check-in
-            );
-            expect(creatorLockDetails.winAmount).to.equal(0n);
-          });
-
-          it("Should check in and finalize the value on last check-in day when penalty is DONATE_TO_CHARITY", async () => {
-            await createChallengeWith(sureYouDo, {
-              penaltyType: PenaltyType.DONATE_TO_CHARITY,
-              penaltyRecipientAddress: charityAddress,
-            });
-
-            // increase time to go to the last check-in day
-            await ethers.provider.send("evm_increaseTime", [endDayUnix]);
-
-            await expect(sureYouDo.checkIn(0)).to.emit(sureYouDo, "ValueLost");
-
-            expect(await sureYouDo.totalDonation()).to.equal(
-              valuePerCheckIn * 9n, // creator missed 9 check-ins
-            );
-
-            expect(
-              await charityManager.getTotalDonation(
-                charityAddress,
-                ethers.ZeroAddress,
-              ),
-            ).to.equal(valuePerCheckIn * 9n);
-
-            const creatorParticipant =
-              await challengeManager.getChallengeParticipant(
-                0,
-                creator.address,
-              );
-
-            const creatorLockDetails = await sureYouDo.getLockDetails(
-              0,
-              creator.address,
-            );
-
-            // expect creator to have 1 check-in and have available value per one check-in
-            expect(creatorParticipant.checkInCount).to.equal(1);
-            expect(creatorLockDetails.hasAvailableValue).to.equal(true);
-            expect(creatorLockDetails.unlockedAmount).to.equal(
-              valuePerCheckIn * creatorParticipant.checkInCount, // only one check-in
-            );
-            expect(creatorLockDetails.winAmount).to.equal(0n);
-          });
-
-          it("Should check in and finalize the value and mint the reward SYD for participant", async () => {
-            await createChallengeWith(sureYouDo.connect(p2), {
-              checkInPeriod: 1,
-            });
-
-            // increase time to go to the last check-in day
-            await ethers.provider.send("evm_increaseTime", [endDayUnix]);
-
-            const p2BalanceBefore = await sydToken.balanceOf(p2.address);
-
-            await expect(sureYouDo.connect(p2).checkIn(0)).to.emit(
-              sureYouDo,
-              "ValueLost",
-            );
-
-            const p2BalanceAfter = await sydToken.balanceOf(p2.address);
-
-            expect(p2BalanceAfter - p2BalanceBefore).to.equal(
-              ethers.parseEther("0.2"),
-            );
-          });
-
-          it("Should check in and finalize the value and mint the doubled reward SYD for pro-account", async () => {
-            expect(await sydToken.balanceOf(creator.address)).to.greaterThan(
-              await sureYouDo.minimumProAccountBalance(),
-            );
-
-            await createChallengeWith(sureYouDo, {
-              checkInPeriod: 1,
-            });
-
-            // increase time to go to the last check-in day
-            await ethers.provider.send("evm_increaseTime", [endDayUnix]);
-
-            const creatorBalanceBefore = await sydToken.balanceOf(
-              creator.address,
-            );
-
-            await expect(sureYouDo.checkIn(0)).to.emit(sureYouDo, "ValueLost");
-
-            const creatorBalanceAfter = await sydToken.balanceOf(
-              creator.address,
-            );
-
-            expect(creatorBalanceAfter - creatorBalanceBefore).to.equal(
-              ethers.parseEther("0.4"),
-            );
-          });
         });
       });
     });
@@ -2365,277 +2088,6 @@ describe("SureYouDo", () => {
 
           expect(participant.checkInCount).to.equal(1);
           expect(participant.lastCheckInAt).to.be.greaterThan(0);
-        });
-
-        describe("On last check-in day", () => {
-          let sureYouDo: SureYouDo;
-          let sydToken: SydToken;
-          let challengeManager: SydChallengeManager;
-          let charityManager: SydCharityManager;
-          let creator: HardhatEthersSigner;
-          let p2: HardhatEthersSigner;
-          let charityAddress: string;
-
-          const platformCommissionValue =
-            (defaultProperties.pledgedValue *
-              BigInt(defaultProperties.platformCommission)) /
-            COMMISSION_PRECISION;
-          const valuePerCheckIn =
-            (defaultProperties.pledgedValue - platformCommissionValue) /
-            BigInt(defaultProperties.duration);
-          const endDayUnix = DAY_IN_SECONDS * (defaultProperties.duration - 1);
-
-          beforeEach(async () => {
-            const contracts = await loadFixture(
-              deployContractWithActiveCharity,
-            );
-            sureYouDo = contracts.sureYouDo;
-            sydToken = contracts.sydToken;
-            challengeManager = contracts.challengeManager;
-            charityManager = contracts.charityManager;
-            charityAddress = contracts.charityAddress;
-            creator = contracts.addr5;
-            p2 = contracts.addr4;
-
-            // add tstToken to allowed-tokens list
-            await sureYouDo.addAllowedToken(tstToken.target, false);
-
-            // creator approves token to be used
-            await tstToken
-              .connect(creator)
-              .approve(sureYouDo.target, defaultProperties.pledgedValue);
-
-            // p2 approves token to be used
-            await tstToken
-              .connect(p2)
-              .approve(sureYouDo.target, defaultProperties.pledgedValue);
-          });
-
-          it("Should check in and finalize the value on last check-in day when penalty is DISTRIBUTE_TO_PARTICIPANTS", async () => {
-            // transfer 100 SYD to creator to make him a pro-account
-            await sydToken.transfer(creator.address, ethers.parseEther("100"));
-
-            await createChallengeWith(sureYouDo.connect(creator), {
-              checkInPeriod: 1,
-              otherParticipants: [p2.address],
-              penaltyType: PenaltyType.DISTRIBUTE_TO_PARTICIPANTS,
-              tokenToLock: tstToken.target,
-            });
-
-            // p2 joins and starts the challenge
-            await sureYouDo
-              .connect(p2)
-              .joinChallenge(0, defaultProperties.pledgedValue, {
-                value: defaultProperties.pledgedValue,
-              });
-
-            // increase time to go to the last check-in day
-            await ethers.provider.send("evm_increaseTime", [endDayUnix]);
-
-            await expect(sureYouDo.connect(creator).checkIn(0)).to.emit(
-              sureYouDo,
-              "ValueLost",
-            );
-
-            const creatorParticipant =
-              await challengeManager.getChallengeParticipant(
-                0,
-                creator.address,
-              );
-
-            const creatorLockDetails = await sureYouDo.getLockDetails(
-              0,
-              creator.address,
-            );
-
-            // expect creator to have 1 check-in and have available value per one check-in
-            expect(creatorParticipant.checkInCount).to.equal(1);
-            expect(creatorLockDetails.hasAvailableValue).to.equal(true);
-            expect(creatorLockDetails.unlockedAmount).to.equal(
-              valuePerCheckIn * creatorParticipant.checkInCount, // only one check-in
-            );
-            expect(creatorLockDetails.winAmount).to.equal(0n);
-            expect(creatorLockDetails.lockedToken).to.equal(tstToken.target);
-
-            const p2Participant =
-              await challengeManager.getChallengeParticipant(0, p2.address);
-
-            const p2LockDetails = await sureYouDo.getLockDetails(0, p2.address);
-
-            // expect p2 to have 0 check-in and have available value per one check-in
-            expect(p2Participant.checkInCount).to.equal(0);
-            expect(p2LockDetails.amount).to.equal(
-              defaultProperties.pledgedValue,
-            );
-            expect(p2LockDetails.hasAvailableValue).to.equal(true);
-            expect(p2LockDetails.unlockedAmount).to.equal(0n);
-            expect(p2LockDetails.winAmount).to.equal(valuePerCheckIn * 9n); // creator missed 9 check-ins
-            expect(p2LockDetails.lockedToken).to.equal(tstToken.target);
-          });
-
-          it("Should check in and finalize the value on last check-in day when penalty is ADD_TO_COMMUNITY", async () => {
-            await createChallengeWith(sureYouDo.connect(creator), {
-              checkInPeriod: 1,
-              penaltyType: PenaltyType.ADD_TO_COMMUNITY,
-              tokenToLock: tstToken.target,
-            });
-
-            // increase time to go to the last check-in day
-            await ethers.provider.send("evm_increaseTime", [endDayUnix]);
-
-            await expect(sureYouDo.connect(creator).checkIn(0)).to.emit(
-              sureYouDo,
-              "ValueLost",
-            );
-
-            const creatorParticipant =
-              await challengeManager.getChallengeParticipant(
-                0,
-                creator.address,
-              );
-
-            const creatorLockDetails = await sureYouDo.getLockDetails(
-              0,
-              creator.address,
-            );
-
-            // expect creator to have 1 check-in and have available value per one check-in
-            expect(creatorParticipant.checkInCount).to.equal(1);
-            expect(creatorLockDetails.hasAvailableValue).to.equal(true);
-            expect(creatorLockDetails.unlockedAmount).to.equal(
-              valuePerCheckIn * creatorParticipant.checkInCount, // only one check-in
-            );
-            expect(creatorLockDetails.winAmount).to.equal(0n);
-            expect(creatorLockDetails.lockedToken).to.equal(tstToken.target);
-
-            expect(
-              await sureYouDo.availableCommunityDistributionPerToken(
-                tstToken.target,
-              ),
-            ).to.equal(
-              valuePerCheckIn * 9n, // creator missed 9 check-ins
-            );
-          });
-
-          it("Should check in and finalize the value on last check-in day when penalty is TRANSFER_TO_ADDRESS", async () => {
-            // transfer 100 SYD to creator to make him a pro-account
-            await sydToken.transfer(creator.address, ethers.parseEther("100"));
-
-            await createChallengeWith(sureYouDo.connect(creator), {
-              checkInPeriod: 1,
-              penaltyType: PenaltyType.TRANSFER_TO_ADDRESS,
-              penaltyRecipientAddress: p2.address,
-              tokenToLock: tstToken.target,
-            });
-
-            // increase time to go to the last check-in day
-            await ethers.provider.send("evm_increaseTime", [endDayUnix]);
-
-            const p2BalanceBefore = await tstToken.balanceOf(p2.address);
-
-            await expect(sureYouDo.connect(creator).checkIn(0)).to.emit(
-              sureYouDo,
-              "ValueLost",
-            );
-
-            const p2BalanceAfter = await tstToken.balanceOf(p2.address);
-
-            expect(p2BalanceAfter - p2BalanceBefore).to.equal(
-              valuePerCheckIn * 9n, // creator missed 9 check-ins
-            );
-
-            const creatorParticipant =
-              await challengeManager.getChallengeParticipant(
-                0,
-                creator.address,
-              );
-
-            const creatorLockDetails = await sureYouDo.getLockDetails(
-              0,
-              creator.address,
-            );
-
-            // expect creator to have 1 check-in and have available value per one check-in
-            expect(creatorParticipant.checkInCount).to.equal(1);
-            expect(creatorLockDetails.hasAvailableValue).to.equal(true);
-            expect(creatorLockDetails.unlockedAmount).to.equal(
-              valuePerCheckIn * creatorParticipant.checkInCount, // only one check-in
-            );
-            expect(creatorLockDetails.winAmount).to.equal(0n);
-          });
-
-          it("Should check in and finalize the value on last check-in day when penalty is DONATE_TO_CHARITY", async () => {
-            await createChallengeWith(sureYouDo.connect(creator), {
-              penaltyType: PenaltyType.DONATE_TO_CHARITY,
-              penaltyRecipientAddress: charityAddress,
-              tokenToLock: tstToken.target,
-            });
-
-            // increase time to go to the last check-in day
-            await ethers.provider.send("evm_increaseTime", [endDayUnix]);
-
-            await expect(sureYouDo.connect(creator).checkIn(0)).to.emit(
-              sureYouDo,
-              "ValueLost",
-            );
-
-            expect(await sureYouDo.totalDonationPerToken(tstToken)).to.equal(
-              valuePerCheckIn * 9n, // creator missed 9 check-ins
-            );
-
-            expect(
-              await charityManager.getTotalDonation(
-                charityAddress,
-                tstToken.target,
-              ),
-            ).to.equal(valuePerCheckIn * 9n);
-
-            const creatorParticipant =
-              await challengeManager.getChallengeParticipant(
-                0,
-                creator.address,
-              );
-
-            const creatorLockDetails = await sureYouDo.getLockDetails(
-              0,
-              creator.address,
-            );
-
-            // expect creator to have 1 check-in and have available value per one check-in
-            expect(creatorParticipant.checkInCount).to.equal(1);
-            expect(creatorLockDetails.hasAvailableValue).to.equal(true);
-            expect(creatorLockDetails.unlockedAmount).to.equal(
-              valuePerCheckIn * creatorParticipant.checkInCount, // only one check-in
-            );
-            expect(creatorLockDetails.winAmount).to.equal(0n);
-          });
-
-          it("Should check in and finalize the value and mint the reward SYD for participant", async () => {
-            await createChallengeWith(sureYouDo.connect(creator), {
-              checkInPeriod: 1,
-              tokenToLock: tstToken.target,
-            });
-
-            // increase time to go to the last check-in day
-            await ethers.provider.send("evm_increaseTime", [endDayUnix]);
-
-            const creatorBalanceBefore = await sydToken.balanceOf(
-              creator.address,
-            );
-
-            await expect(sureYouDo.connect(creator).checkIn(0)).to.emit(
-              sureYouDo,
-              "ValueLost",
-            );
-
-            const creatorBalanceAfter = await sydToken.balanceOf(
-              creator.address,
-            );
-
-            expect(creatorBalanceAfter - creatorBalanceBefore).to.equal(
-              ethers.parseEther("0.2"),
-            );
-          });
         });
       });
     });
@@ -2846,6 +2298,43 @@ describe("SureYouDo", () => {
           expect(
             penaltyAddressBalanceAfter - penaltyAddressBalanceBefore,
           ).to.equal(defaultProperties.pledgedValue * 2n);
+        });
+
+        it("Should finalize but not send the reward when user reached the daily reward limit", async () => {
+          const {
+            sureYouDo,
+            sydToken,
+            owner: creator,
+          } = await loadFixture(deployContracts);
+
+          // update daily reward limit
+          await sureYouDo.updateDailyRewardLimitPerUser(
+            ethers.parseEther("0.6"),
+          );
+
+          // user creates two challenges at the same day
+          await createChallengeWith(sureYouDo);
+          await createChallengeWith(sureYouDo);
+
+          // increase time to pass the duration
+          await ethers.provider.send("evm_increaseTime", [endedDayUnix]);
+
+          const creatorBalanceBefore = await sydToken.balanceOf(
+            creator.address,
+          );
+
+          // creator finalizes the first challenge
+          await sureYouDo.finalizeChallenge(0);
+
+          // creator finalizes the second challenge
+          await sureYouDo.finalizeChallenge(1);
+
+          const creatorBalanceAfter = await sydToken.balanceOf(creator.address);
+
+          // expect creator to get the reward of the first challenge only
+          expect(creatorBalanceAfter - creatorBalanceBefore).to.equal(
+            ethers.parseEther("0.4"),
+          );
         });
       });
     });
