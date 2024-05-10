@@ -97,6 +97,16 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     CommunityDistributionEvent[] public communityDistributionEvents;
     mapping(address => mapping(uint256 => uint256)) private _holdersLockedAmounts;
 
+    // To store the limit of rewards that can be given to a user in a day
+    uint256 public rewardLimitPerDayPerWallet;
+
+    // To keep track of the last day when a challenge was finalized
+    // This is used to manage the daily rewards limit for each participant
+    uint256 public lastFinalizationDayTracker;
+
+    // To store the daily reward given to each user. It is reset every day.
+    mapping(address => uint256) public dailyRewardTracker;
+
     uint8 public maxParticipants; // Max 255 with creator included
     uint8 public maxParticipantsProAccount; // Max 255 with creator included
     uint32 public minPlatformCommission;
@@ -206,6 +216,16 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
      */
     function updateMinimumProAccountBalance(uint256 _minimumProAccountBalance) external onlyOwner {
         minimumProAccountBalance = _minimumProAccountBalance;
+    }
+
+    /**
+     * @notice Updates the reward limit per day per wallet.
+     * @param newRewardLimit The new reward limit per day per wallet.
+     */
+    function updateDailyRewardLimitPerUser(uint256 newRewardLimit) external onlyOwner {
+        if (newRewardLimit != rewardLimitPerDayPerWallet) {
+            rewardLimitPerDayPerWallet = newRewardLimit;
+        }
     }
 
     /**
@@ -441,6 +461,10 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     function finalizeChallenge(uint64 challengeId) external nonReentrant {
         address[] memory participants = challengeManager.finalizeChallenge(challengeId, msg.sender);
 
+        // Update the last finalization day tracker when a challenge was finalized
+        // This is used for managing the daily rewards limit for each participant
+        _updateLastFinalizationDayTracker();
+
         for (uint i = 0; i < participants.length; i++) {
             // value may be finalized already if the participant has checked in on the last day
             if (valueFinalizedAt[challengeId][participants[i]] == 0) {
@@ -468,6 +492,10 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
             successfulParticipants,
             failedParticipants
         );
+
+        // Update the last finalization day tracker when a challenge was finalized
+        // This is used for managing the daily rewards limit for each participant
+        _updateLastFinalizationDayTracker();
 
         for (uint i = 0; i < successfulParticipants.length; i++) {
             if (lockTimes[challengeId][successfulParticipants[i]] == 0) {
@@ -946,7 +974,24 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
         if (_isProAccount(participantAddress)) {
             amount *= 2;
         }
-        ISYDToken(sydTokenAddress).transfer(participantAddress, amount);
+
+        // If the daily reward limit is set, check if the participant has reached their daily reward limit
+        if (rewardLimitPerDayPerWallet > 0) {
+            bool isAnotherDay = lastFinalizationDayTracker < block.timestamp / 1 days;
+            // If it's a new day, reset the daily reward limit for the participant
+            if (isAnotherDay) {
+                dailyRewardTracker[participantAddress] = 0;
+            }
+
+            // If the participant hasn't reached their daily reward limit,
+            // transfer the reward to the participant and update the participant's daily reward limit
+            if (amount + dailyRewardTracker[participantAddress] <= rewardLimitPerDayPerWallet) {
+                dailyRewardTracker[participantAddress] += amount;
+                ISYDToken(sydTokenAddress).transfer(participantAddress, amount);
+            }
+        } else {
+            ISYDToken(sydTokenAddress).transfer(participantAddress, amount);
+        }
     }
 
     function _finalizeValueForSuccessfulParticipant(uint64 challengeId, address participantAddress) internal {
@@ -997,5 +1042,18 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
 
     function _sydTotalSupply() internal view returns (uint256) {
         return ISYDToken(sydTokenAddress).totalSupply();
+    }
+
+    /**
+     * @notice Updates the last finalization day tracker.
+     * This function is used to keep track of the last day when a challenge was finalized.
+     * It is important for managing daily rewards limit for each participant.
+     */
+    function _updateLastFinalizationDayTracker() internal {
+        uint256 currentDay = block.timestamp / 1 days;
+        // Update the tracker only when the daily reward limit is set and it's a new day
+        if (rewardLimitPerDayPerWallet > 0 && currentDay > lastFinalizationDayTracker) {
+            lastFinalizationDayTracker = currentDay;
+        }
     }
 }

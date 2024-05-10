@@ -2299,6 +2299,43 @@ describe("SureYouDo", () => {
             penaltyAddressBalanceAfter - penaltyAddressBalanceBefore,
           ).to.equal(defaultProperties.pledgedValue * 2n);
         });
+
+        it("Should finalize but not send the reward when user reached the daily reward limit", async () => {
+          const {
+            sureYouDo,
+            sydToken,
+            owner: creator,
+          } = await loadFixture(deployContracts);
+
+          // update daily reward limit
+          await sureYouDo.updateDailyRewardLimitPerUser(
+            ethers.parseEther("0.6"),
+          );
+
+          // user creates two challenges at the same day
+          await createChallengeWith(sureYouDo);
+          await createChallengeWith(sureYouDo);
+
+          // increase time to pass the duration
+          await ethers.provider.send("evm_increaseTime", [endedDayUnix]);
+
+          const creatorBalanceBefore = await sydToken.balanceOf(
+            creator.address,
+          );
+
+          // creator finalizes the first challenge
+          await sureYouDo.finalizeChallenge(0);
+
+          // creator finalizes the second challenge
+          await sureYouDo.finalizeChallenge(1);
+
+          const creatorBalanceAfter = await sydToken.balanceOf(creator.address);
+
+          // expect creator to get the reward of the first challenge only
+          expect(creatorBalanceAfter - creatorBalanceBefore).to.equal(
+            ethers.parseEther("0.4"),
+          );
+        });
       });
     });
 
