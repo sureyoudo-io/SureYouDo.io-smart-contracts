@@ -109,11 +109,11 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
 
     uint8 public maxParticipants; // Max 255 with creator included
     uint8 public maxParticipantsProAccount; // Max 255 with creator included
-    uint32 public minPlatformCommission;
-    uint32 public minPlatformCommissionProAccount;
+    uint32 public minPlatformCommission; // 0% commission for normal accounts
+    uint32 public minPlatformCommissionProAccount; // 0% commission for pro accounts
+    address public sydTokenAddress;
     uint256 public minimumProAccountBalance;
 
-    address public sydTokenAddress;
 
     ISydCharityManager private charityManager;
     ISydChallengeManager private challengeManager;
@@ -139,8 +139,6 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     function initialize(address _charityManagerAddress, address _challengeManagerAddress) external onlyOwner {
         maxParticipants = 2;
         maxParticipantsProAccount = 4;
-        minPlatformCommission = 0; // 0% commission for normal accounts
-        minPlatformCommissionProAccount = 0; // 0% commission for pro accounts
         minimumProAccountBalance = 10 ether;
 
         charityManager = ISydCharityManager(_charityManagerAddress);
