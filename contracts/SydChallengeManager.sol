@@ -244,8 +244,11 @@ contract SydChallengeManager is Ownable {
         // delete challenge verifier
         delete _challengeVerifiers[challengeId];
 
+        // storing challenge.joinedParticipants.length in a variable
+        uint joinedParticipantsLength = challenge.joinedParticipants.length;
+
         // delete challenge participants
-        for (uint i = 0; i < challenge.joinedParticipants.length; i++) {
+        for (uint i = 0; i < joinedParticipantsLength; i++) {
             delete _challengeParticipantIsAllowed[challengeId][challenge.joinedParticipants[i]];
             delete _challengeParticipantJoinedAt[challengeId][challenge.joinedParticipants[i]];
         }
@@ -313,9 +316,12 @@ contract SydChallengeManager is Ownable {
         uint256 lastCheckInDay = _challengeParticipantLastCheckInTimes[challengeId][participantAddress] / 1 days;
         uint256 goalDay = challenge.startedAt / 1 days + challenge.duration;
 
+        // Storing challenge.joinedParticipants.length in a variable
+        uint joinedParticipantsLength = challenge.joinedParticipants.length;
+
         // Check if all participants have checked in on the last day
-        if (currentDay == goalDay - 1 && challenge.joinedParticipants.length > 1) {
-            for (uint i = 0; i < challenge.joinedParticipants.length; i++) {
+        if (currentDay == goalDay - 1 && joinedParticipantsLength > 1) {
+            for (uint i = 0; i < joinedParticipantsLength; i++) {
                 if (_challengeParticipantLastCheckInTimes[challengeId][challenge.joinedParticipants[i]] < goalDay - 1) {
                     revert NotAllParticipantsHaveCheckedIn();
                 }
