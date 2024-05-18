@@ -75,8 +75,10 @@ contract SydCharityManager is Ownable, ReentrancyGuard {
     }
 
     function getAllCharities() external view returns (Charity[] memory) {
-        Charity[] memory charities = new Charity[](_charityAddresses.length);
-        for (uint256 i = 0; i < _charityAddresses.length; i++) {
+        uint charityAddressesLength = _charityAddresses.length;
+
+        Charity[] memory charities = new Charity[](charityAddressesLength);
+        for (uint256 i = 0; i < charityAddressesLength; i++) {
             charities[i] = _charities[_charityAddresses[i]];
         }
         return charities;
