@@ -13,9 +13,9 @@ library SydStructures {
 
     struct Challenge {
         uint64 id;
-        uint32 checkInPeriod;
         uint8 penaltyType;
         uint8 participantsCount;
+        uint32 checkInPeriod;
         string title;
         uint256 valuePromised;
         uint256 duration;
