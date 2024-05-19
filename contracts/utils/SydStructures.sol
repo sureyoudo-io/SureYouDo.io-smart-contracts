@@ -13,12 +13,12 @@ library SydStructures {
 
     struct Challenge {
         uint64 id;
+        uint8 penaltyType;
+        uint8 participantsCount;
+        uint32 checkInPeriod;
         string title;
         uint256 valuePromised;
         uint256 duration;
-        uint32 checkInPeriod;
-        uint8 penaltyType;
-        uint8 participantsCount;
         address[] joinedParticipants;
         uint256 createdAt;
         uint256 startedAt;
@@ -33,10 +33,10 @@ library SydStructures {
 
     struct ParticipantDetails {
         bool isAllowed;
+        bool isWinner;
         uint256 joinedAt;
         uint256 checkInCount;
         uint256 lastCheckInAt;
-        bool isWinner;
     }
 
     struct LockDetails {
