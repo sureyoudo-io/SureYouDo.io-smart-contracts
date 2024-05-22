@@ -13,6 +13,26 @@ set personal or group challenges and targets and lock in a monetary value via sm
 those challenges. This unique approach leverages the accountability factor by introducing a financial stake, making the
 journey towards achieving goals even more compelling.
 
+## Getting Started
+
+1. Clone the repository:
+
+```bash
+    git clone https://github.com/sureyoudo-io/SureYouDo.io-smart-contracts.git
+```
+
+2. Install the dependencies:
+
+```bash
+    npm install
+```
+
+3. Compile the contracts:
+
+```bash
+    npm run compile
+```
+
 ## Contributing
 
 We encourage public contributions! If you have a bug fix or new feature that you would like to contribute, please just
