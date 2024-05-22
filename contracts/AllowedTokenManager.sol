@@ -29,6 +29,7 @@ contract AllowedTokensManager is Ownable {
     /**
      * @notice Adds a token to the list of allowed tokens. Only the owner can call this function.
      * @param tokenAddress The address of the token to be added.
+     * @param proAccountOnly Tells if the token is allowed for pro accounts.
      */
     function addAllowedToken(address tokenAddress, bool proAccountOnly) external onlyOwner {
         if (tokenAddress == address(0)) {
