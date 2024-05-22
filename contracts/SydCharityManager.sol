@@ -25,6 +25,11 @@ contract SydCharityManager is Ownable, ReentrancyGuard {
 
     constructor(address owner, address mainContract) Ownable(owner, mainContract) {}
 
+    /**
+     * @dev Add a new charity
+     * @param charityAddress The address of the charity
+     * @param name The name of the charity
+    */
     function addCharity(address charityAddress, string calldata name) external onlyOwner {
         if (_charities[charityAddress].charityAddress != address(0)) {
             revert CharityAlreadyExists();
@@ -34,6 +39,12 @@ contract SydCharityManager is Ownable, ReentrancyGuard {
         emit CharityAdded(charityAddress);
     }
 
+    /**
+     * @dev Modifies a charity
+     * @param charityAddress The address of the charity
+     * @param name The name of the charity
+     * @param isActive The status of the charity
+    */
     function modifyCharity(address charityAddress, string calldata name, bool isActive) external onlyOwner {
         if (_charities[charityAddress].charityAddress == address(0)) {
             revert CharityDoesNotExist();
@@ -51,6 +62,12 @@ contract SydCharityManager is Ownable, ReentrancyGuard {
         emit CharityModified(charityAddress);
     }
 
+    /**
+     * @dev Add a donation to a charity
+     * @param charityAddress The address of the charity
+     * @param amount The amount of the donation
+     * @param targetToken The address of the token
+    */
     function addDonation(
         address charityAddress,
         uint256 amount,
@@ -70,10 +87,19 @@ contract SydCharityManager is Ownable, ReentrancyGuard {
         }
     }
 
+    /**
+     * @dev Check if a charity is active
+     * @param charityAddress The address of the charity
+     * @return bool
+    */
     function isCharityActive(address charityAddress) external view returns (bool) {
         return _charities[charityAddress].isActive;
     }
 
+    /**
+     * @dev Get all charities
+     * @return Charity[] An array of charities
+    */
     function getAllCharities() external view returns (Charity[] memory) {
         uint charityAddressesLength = _charityAddresses.length;
 
@@ -84,14 +110,29 @@ contract SydCharityManager is Ownable, ReentrancyGuard {
         return charities;
     }
 
+    /**
+     * @dev Get all charity addresses
+     * @return address[] An array of charity addresses
+    */
     function getCharityAddresses() external view returns (address[] memory) {
         return _charityAddresses;
     }
 
+    /**
+     * @dev Get a charity
+     * @param charityAddress The address of the charity
+     * @return Charity
+    */
     function getCharity(address charityAddress) external view returns (Charity memory) {
         return _charities[charityAddress];
     }
 
+    /**
+     * @dev Get the total donation of a charity
+     * @param charityAddress The address of the charity
+     * @param targetToken The address of the token
+     * @return uint256
+    */
     function getTotalDonation(address charityAddress, address targetToken) external view returns (uint256) {
         if (targetToken != address(0)) {
             return _totalDonationPerCharityPerToken[charityAddress][targetToken];
