@@ -281,7 +281,7 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
         if (
             platformCommissionPercentage > SydStructures.COMMISSION_PRECISION ||
             (isProAccount && platformCommissionPercentage < minPlatformCommissionProAccount) ||
-            (platformCommissionPercentage < minPlatformCommission)
+            (isProAccount == false && platformCommissionPercentage < minPlatformCommission)
         ) {
             revert InvalidPlatformCommission();
         }
