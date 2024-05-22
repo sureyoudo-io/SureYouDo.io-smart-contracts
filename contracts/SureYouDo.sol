@@ -330,10 +330,6 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
         }
 
         if (tokenToLock != address(0)) {
-            if (pledgedValue == 0) {
-                revert InvalidPledgedValue();
-            }
-
             if (_isTokenAllowed(tokenToLock) == false) {
                 revert NotAllowedERC20Token();
             }
