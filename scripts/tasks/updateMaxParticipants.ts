@@ -57,7 +57,7 @@ const updateMaxParticipants = async (
         "updateMaxParticipants",
       ) || []),
       {
-        timestamp: Date.now(),
+        executedAt: new Date().toISOString(),
         regular,
         pro,
       },

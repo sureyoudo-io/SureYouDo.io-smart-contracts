@@ -17,7 +17,7 @@ const deploy = async (
     if (reportData && reportData.deployedAt) {
       if (!force) {
         logger.warn(
-          `Contracts already deployed on "${targetNetwork.name}" network on ${new Date(reportData.timestamp).toLocaleString()}`,
+          `Contracts already deployed on "${targetNetwork.name}" network on ${reportData.executedAt}`,
         );
         logger.info(`SureYouDo: ${reportData.deployedAt.SureYouDo}`);
         logger.info(
@@ -64,7 +64,7 @@ const deploy = async (
     logger.info("SureYouDo contract initialization completed");
 
     const newReports = {
-      timestamp: Date.now(),
+      executedAt: new Date().toISOString(),
       deployedAt: {
         SureYouDo: syd.target,
         SydChallengeManager: challengeManager.target,

@@ -49,7 +49,7 @@ const addCharity = async (
     const updatedReports = [
       ...(reports.readReport<AddCharityReport[]>("addCharity") || []),
       {
-        timestamp: Date.now(),
+        executedAt: new Date().toISOString(),
         address,
         name,
       },

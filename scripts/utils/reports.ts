@@ -3,7 +3,7 @@ import path from "path";
 import logger from "./logger";
 
 export type DeployReport = {
-  timestamp: number;
+  executedAt: string;
   deployedAt: {
     SureYouDo: string;
     SydChallengeManager: string;
@@ -12,18 +12,18 @@ export type DeployReport = {
 };
 
 export type SetSydTokenAddressReport = {
-  timestamp: number;
+  executedAt: string;
   address: string;
 };
 
 export type AddCharityReport = {
-  timestamp: number;
+  executedAt: string;
   address: string;
   name: string;
 };
 
 export type UpdateMaxParticipantsReport = {
-  timestamp: number;
+  executedAt: string;
   regular: string;
   pro: string;
 };
@@ -31,7 +31,7 @@ export type UpdateMaxParticipantsReport = {
 export type UpdateMinPlatformCommissionReport = UpdateMaxParticipantsReport;
 
 export type UpdateDailyRewardLimitPerUserReport = {
-  timestamp: number;
+  executedAt: string;
   rewardLimit: string;
 };
 

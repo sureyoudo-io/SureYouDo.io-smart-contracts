@@ -48,7 +48,7 @@ const updateDailyRewardLimitPerUser = async (
         "updateDailyRewardLimitPerUser",
       ) || []),
       {
-        timestamp: Date.now(),
+        executedAt: new Date().toISOString(),
         limit,
       },
     ];

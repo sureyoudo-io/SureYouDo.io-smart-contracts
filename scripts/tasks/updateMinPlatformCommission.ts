@@ -50,7 +50,7 @@ const updateMinPlatformCommission = async (
         "updateMinPlatformCommission",
       ) || []),
       {
-        timestamp: Date.now(),
+        executedAt: new Date().toISOString(),
         regular,
         pro,
       },

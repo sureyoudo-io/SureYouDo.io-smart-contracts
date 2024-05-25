@@ -49,7 +49,7 @@ const setSydTokenAddress = async (
         "setSydTokenAddress",
       ) || []),
       {
-        timestamp: Date.now(),
+        executedAt: new Date().toISOString(),
         address,
       },
     ];
