@@ -28,6 +28,8 @@ export type UpdateMaxParticipantsReport = {
   pro: string;
 };
 
+export type UpdateMinPlatformCommissionReport = UpdateMaxParticipantsReport;
+
 type ReportFactory = {
   readReport: <T>(name: string) => T | undefined;
   writeReport: <T>(name: string, data: T) => void;

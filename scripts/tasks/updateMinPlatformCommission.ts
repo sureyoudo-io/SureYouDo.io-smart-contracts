@@ -3,8 +3,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SureYouDo__factory } from "../../typechain-types";
 import logger from "../utils/logger";
 import reportFactory, {
-  DeployReport,
-  UpdateMaxParticipantsReport,
+  type DeployReport,
+  type UpdateMinPlatformCommissionReport,
 } from "../utils/reports";
 
 const updateMinPlatformCommission = async (
@@ -46,7 +46,7 @@ const updateMinPlatformCommission = async (
 
     // Update reports
     const updatedReport = [
-      ...(reports.readReport<UpdateMaxParticipantsReport[]>(
+      ...(reports.readReport<UpdateMinPlatformCommissionReport[]>(
         "updateMinPlatformCommission",
       ) || []),
       {
