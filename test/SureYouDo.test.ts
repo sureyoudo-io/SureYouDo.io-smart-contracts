@@ -2,7 +2,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { SureYouDo, SydToken, TestERC20 } from "../typechain-types";
+import { SureYouDo, SYDMock, TestERC20 } from "../typechain-types";
 
 const DAY_IN_SECONDS = 86400;
 const COMMISSION_PRECISION = 10_000n;
@@ -100,9 +100,9 @@ const deployContracts = async () => {
   // init syd contract
   await sureYouDo.initialize(charityManager.target, challengeManager.target);
 
-  // deploy SYD Token
-  const SYDToken = await ethers.getContractFactory("SydToken", owner);
-  const sydToken = await SYDToken.deploy(
+  // deploy SYD Token Mock
+  const SYDTokenMock = await ethers.getContractFactory("SYDMock", owner);
+  const sydTokenMock = await SYDTokenMock.deploy(
     "SureYouDo.io",
     "SYD",
     [owner.address, sureYouDo.target],
@@ -110,13 +110,13 @@ const deployContracts = async () => {
   );
 
   // set the syd token address in the main contract
-  await sureYouDo.setSydTokenAddress(sydToken.target);
+  await sureYouDo.setSydTokenAddress(sydTokenMock.target);
 
   return {
     sureYouDo,
     charityManager,
     challengeManager,
-    sydToken,
+    sydToken: sydTokenMock,
     owner,
     addr1,
     addr2,
@@ -3392,7 +3392,7 @@ describe("SureYouDo", () => {
 
     describe("With network token", () => {
       let sureYouDo: SureYouDo;
-      let sydToken: SydToken;
+      let sydToken: SYDMock;
       let owner: HardhatEthersSigner;
       let creator: HardhatEthersSigner;
       let addr2: HardhatEthersSigner;
@@ -4097,7 +4097,7 @@ describe("SureYouDo", () => {
 
     describe("With ERC20 token", () => {
       let sureYouDo: SureYouDo;
-      let sydToken: SydToken;
+      let sydToken: SYDMock;
       let owner: HardhatEthersSigner;
       let creator: HardhatEthersSigner;
       let addr2: HardhatEthersSigner;
