@@ -1,38 +1,45 @@
-import dotenv from "dotenv";
+import "dotenv/config";
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-gas-reporter";
 import "hardhat-contract-sizer";
+import { HttpNetworkAccountsUserConfig } from "hardhat/types";
 
-dotenv.config();
+// Import tasks
+import "./scripts/tasks";
+
+// Set the OWNER_PRIVATE_KEY environment variable in the .env file
+const OWNER_PRIVATE_KEY = process.env.OWNER_PRIVATE_KEY;
 
 let networks = {};
+let accounts: HttpNetworkAccountsUserConfig | undefined;
 
-// If not running in GitHub Actions, add the Amoy network
-if (
-  !process.env.GITHUB_ACTIONS &&
-  process.env.POLYGON_AMOY_RPC_URL &&
-  process.env.POLYGON_AMOY_PRIVATE_KEY
-) {
+// We don't want to set up networks if we are running in Github Actions
+const isRunningInGithubActions = !!process.env.GITHUB_ACTIONS;
+if (!isRunningInGithubActions) {
+  // init accounts
+  accounts = OWNER_PRIVATE_KEY ? [OWNER_PRIVATE_KEY] : undefined;
+  if (!accounts) {
+    throw new Error("No private key found");
+  }
+
+  // init networks
   networks = {
     ...networks,
-    amoy: {
-      url: process.env.POLYGON_AMOY_RPC_URL,
-      accounts: [process.env.POLYGON_AMOY_PRIVATE_KEY],
+    // testnets
+    POLYGON_AMOY_TESTNET: {
+      url: process.env.POLYGON_AMOY_TESTNET_RPC_URL || "",
+      accounts,
     },
-  };
-}
+    ARBITRUM_SEPPOLIA_TESTNET: {
+      url: process.env.ARBITRUM_SEPPOLIA_TESTNET_RPC_URL || "",
+      accounts,
+    },
 
-if (
-  !process.env.GITHUB_ACTIONS &&
-  process.env.ARBITRUM_SEPOLIA_RPC_URL &&
-  process.env.ARBITRUM_SEPOLIA_PRIVATE_KEY
-) {
-  networks = {
-    ...networks,
-    arbitrumSepolia: {
-      url: process.env.ARBITRUM_SEPOLIA_RPC_URL,
-      accounts: [process.env.ARBITRUM_SEPOLIA_PRIVATE_KEY],
+    // mainnets
+    BSC_MAINNET: {
+      url: process.env.BSC_MAINNET_RPC_URL || "",
+      accounts,
     },
   };
 }

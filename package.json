@@ -39,7 +39,8 @@
     "dotenv": "^16.4.5",
     "hardhat": "^2.20.1",
     "hardhat-contract-sizer": "^2.10.0",
-    "hardhat-gas-reporter": "^1.0.10"
+    "hardhat-gas-reporter": "^1.0.10",
+    "winston": "^3.13.0"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
