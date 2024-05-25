@@ -10,7 +10,7 @@ import {Ownable} from "./utils/Ownable.sol";
 import {AllowedTokensManager} from "./AllowedTokenManager.sol";
 import {SydChallengeManager, ISydChallengeManager} from "./SydChallengeManager.sol";
 import {SydStructures} from "./utils/SydStructures.sol";
-import {ISYDToken} from "./SydToken.sol";
+import {ISYD} from "./interfaces/ISYD.sol";
 
 contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     using SafeERC20 for ERC20;
@@ -741,7 +741,7 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
         }
 
         // burn locked syd
-        ISYDToken(sydTokenAddress).burn(_event.totalSydLocked);
+        ISYD(sydTokenAddress).burn(_event.totalSydLocked);
 
         _event.finalizedAt = block.timestamp;
     }
@@ -957,7 +957,7 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
             amount *= 2;
         }
 
-        ISYDToken(sydTokenAddress).transfer(verifierAddress, amount);
+        ISYD(sydTokenAddress).transfer(verifierAddress, amount);
     }
 
     function _sendChallengeParticipantReward(address participantAddress) internal {
@@ -981,10 +981,10 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
             // transfer the reward to the participant and update the participant's daily reward limit
             if (amount + dailyRewardTracker[participantAddress] <= rewardLimitPerDayPerWallet) {
                 dailyRewardTracker[participantAddress] += amount;
-                ISYDToken(sydTokenAddress).transfer(participantAddress, amount);
+                ISYD(sydTokenAddress).transfer(participantAddress, amount);
             }
         } else {
-            ISYDToken(sydTokenAddress).transfer(participantAddress, amount);
+            ISYD(sydTokenAddress).transfer(participantAddress, amount);
         }
     }
 
@@ -1031,11 +1031,11 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     }
 
     function _balanceOfSyd(address account) internal view returns (uint256) {
-        return ISYDToken(sydTokenAddress).balanceOf(account);
+        return ISYD(sydTokenAddress).balanceOf(account);
     }
 
     function _sydTotalSupply() internal view returns (uint256) {
-        return ISYDToken(sydTokenAddress).totalSupply();
+        return ISYD(sydTokenAddress).totalSupply();
     }
 
     /**

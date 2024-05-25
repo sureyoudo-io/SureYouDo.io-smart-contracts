@@ -1,5 +1,7 @@
 import { ethers } from "hardhat";
 
+const SYD_OFT_ADDRESS = "0x038EAd554859Da5BB60Dfdd8375476cb35F53b95"; // oft address on amoy
+
 const transferTestToken = async (
   testTokenAddress: string,
   toAddress: string,
@@ -41,17 +43,8 @@ async function main() {
   await charityManager.addCharity(charity1.address, "Cancer Research Charity");
   await charityManager.addCharity(charity2.address, "World Hunger Charity");
 
-  // deploy SYD token
-  const SYDToken = await ethers.getContractFactory("SydToken");
-  const sydToken = await SYDToken.deploy(
-    "SureYouDo",
-    "SYD",
-    [owner.address, syd.target],
-    [ethers.parseEther("50000"), ethers.parseEther("50000")],
-  );
-
   // set the syd token address in the main contract
-  await syd.setSydTokenAddress(sydToken.target);
+  await syd.setSydTokenAddress(SYD_OFT_ADDRESS);
 
   // deploy test erc20 token
   const testToken = await ethers.deployContract("TestERC20");
@@ -61,7 +54,7 @@ async function main() {
   await syd.addAllowedToken(testToken.target, true);
 
   // update max participants
-  await syd.updateMaxParticipants(2);
+  await syd.updateMaxParticipants(2, 6);
 
   // update the min platform commission
   await syd.updateMinPlatformCommission(50, 1); // 0.5% and 0.01%
@@ -76,7 +69,7 @@ async function main() {
   console.log(`SYD_ADDRESS=${syd.target}`);
   console.log(`CHALLENGE_MANAGER_ADDRESS=${challengeManager.target}`);
   console.log(`CHARITY_MANAGER_ADDRESS=${charityManager.target}`);
-  console.log(`SYD_TOKEN_ADDRESS=${sydToken.target}`);
+  console.log(`SYD_TOKEN_ADDRESS=${SYD_OFT_ADDRESS}`);
   console.log(`#-------------------------------------------------`);
   console.log(`TEST_ERC20_ADDRESS=${testToken.target}`);
   console.log(`#-------------------------------------------------`);
