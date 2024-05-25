@@ -1,16 +1,11 @@
-import fs from "fs";
-import path from "path";
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SureYouDo__factory } from "../../typechain-types";
 import logger from "../utils/logger";
-
-const reportsDir = path.join(__dirname, "../..", "reports");
-const setSydTokenReportDir = path.join(
-  __dirname,
-  "../..",
-  "reports/setSydTokenAddress",
-);
+import reportFactory, {
+  type DeployReport,
+  type SetSydTokenAddressReport,
+} from "../utils/reports";
 
 const setSydTokenAddress = async (
   {
@@ -24,21 +19,14 @@ const setSydTokenAddress = async (
     const targetNetwork = hre.network;
 
     const { ethers } = hre;
+    const reports = reportFactory(targetNetwork.name);
 
     logger.info(`Setting SYD token address on "${targetNetwork.name}" network`);
     const [owner] = await ethers.getSigners();
 
     // Get the deployed SYD contract address from reports
-    const deployReport = path.join(
-      reportsDir,
-      `deploy/${targetNetwork.name}.json`,
-    );
-    if (!fs.existsSync(deployReport)) {
-      logger.error(`No deployment found for "${targetNetwork.name}" network`);
-      return;
-    }
-    const deployReportData = JSON.parse(fs.readFileSync(deployReport, "utf8"));
-    const sydAddress = deployReportData.deployedAt.SureYouDo || "";
+    const deployReportData = reports.readReport<DeployReport>("deploy");
+    const sydAddress = deployReportData?.deployedAt.SureYouDo || "";
 
     // init the SYD contract
     const syd = SureYouDo__factory.connect(sydAddress, owner);
@@ -55,30 +43,18 @@ const setSydTokenAddress = async (
       `SYD token added to allowed tokens to lock value successfully!`,
     );
 
-    // Write added charity to the report, each network can have multiple charities
-    const setSydTokenReport = path.join(
-      setSydTokenReportDir,
-      `${targetNetwork.name}.json`,
-    );
-    let setSydTokenReportData = [];
-    if (fs.existsSync(setSydTokenReport)) {
-      setSydTokenReportData = JSON.parse(
-        fs.readFileSync(setSydTokenReport, "utf8"),
-      );
-    } else {
-      fs.mkdirSync(setSydTokenReportDir, { recursive: true });
-    }
-    setSydTokenReportData = [
-      ...setSydTokenReportData,
+    // Update reports
+    const updatedSetSydTokenReport = [
+      ...(reports.readReport<SetSydTokenAddressReport[]>(
+        "setSydTokenAddress",
+      ) || []),
       {
         timestamp: Date.now(),
         address,
       },
     ];
-    fs.writeFileSync(
-      setSydTokenReport,
-      JSON.stringify(setSydTokenReportData, null, 2),
-    );
+
+    reports.writeReport("setSydTokenAddress", updatedSetSydTokenReport);
   } catch (error) {
     logger.error(error);
   }

@@ -1,11 +1,7 @@
-import fs from "fs";
-import path from "path";
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import logger from "../utils/logger";
-
-const rootDir = path.join(__dirname, "../..");
-const reportDir = path.join(__dirname, "../..", "reports/deploy");
+import reportFactory, { DeployReport } from "../utils/reports";
 
 const deploy = async (
   { force }: { force: boolean },
@@ -15,29 +11,26 @@ const deploy = async (
     const targetNetwork = hre.network;
 
     const { ethers } = hre;
+    const reports = reportFactory(targetNetwork.name);
 
-    // Check if there are any deployed contracts for this network
-    const reportFile = path.join(reportDir, `${targetNetwork.name}.json`);
-    if (fs.existsSync(reportFile)) {
-      const reportData = JSON.parse(fs.readFileSync(reportFile, "utf8"));
-      if (reportData && reportData.deployedAt) {
-        if (!force) {
-          logger.warn(
-            `Contracts already deployed on "${targetNetwork.name}" network on ${new Date(reportData.timestamp).toLocaleString()}`,
-          );
-          logger.info(`SureYouDo: ${reportData.deployedAt.SureYouDo}`);
-          logger.info(
-            `SydChallengeManager: ${reportData.deployedAt.SydChallengeManager}`,
-          );
-          logger.info(
-            `SydCharityManager: ${reportData.deployedAt.SydCharityManager}`,
-          );
-          return;
-        } else {
-          logger.warn(
-            `Force deployment requested; re-deploying contracts on "${targetNetwork.name}" network`,
-          );
-        }
+    const reportData = reports.readReport<DeployReport>("deploy");
+    if (reportData && reportData.deployedAt) {
+      if (!force) {
+        logger.warn(
+          `Contracts already deployed on "${targetNetwork.name}" network on ${new Date(reportData.timestamp).toLocaleString()}`,
+        );
+        logger.info(`SureYouDo: ${reportData.deployedAt.SureYouDo}`);
+        logger.info(
+          `SydChallengeManager: ${reportData.deployedAt.SydChallengeManager}`,
+        );
+        logger.info(
+          `SydCharityManager: ${reportData.deployedAt.SydCharityManager}`,
+        );
+        return;
+      } else {
+        logger.warn(
+          `Force deployment requested; re-deploying contracts on "${targetNetwork.name}" network`,
+        );
       }
     }
 
@@ -70,11 +63,7 @@ const deploy = async (
     await syd.initialize(charityManager.target, challengeManager.target);
     logger.info("SureYouDo contract initialization completed");
 
-    // Write contract addresses to a file in the ./reports directory
-    if (!fs.existsSync(reportDir)) {
-      fs.mkdirSync(reportDir);
-    }
-    const reportData = {
+    const newReports = {
       timestamp: Date.now(),
       deployedAt: {
         SureYouDo: syd.target,
@@ -82,10 +71,8 @@ const deploy = async (
         SydCharityManager: charityManager.target,
       },
     };
-    fs.writeFileSync(reportFile, JSON.stringify(reportData, null, 2));
-    logger.info(
-      `Deployment completed successfully! Reports in ${path.relative(rootDir, reportFile)};`,
-    );
+    reports.writeReport("deploy", newReports);
+    logger.info(`Deployment completed successfully!`);
   } catch (err) {
     logger.error(err);
   }

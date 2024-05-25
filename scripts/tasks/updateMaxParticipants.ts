@@ -1,16 +1,11 @@
-import fs from "fs";
-import path from "path";
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SureYouDo__factory } from "../../typechain-types";
 import logger from "../utils/logger";
-
-const reportsDir = path.join(__dirname, "../..", "reports");
-const updateMaxParticipantsReportDir = path.join(
-  __dirname,
-  "../..",
-  "reports/updateMaxParticipants",
-);
+import reportFactory, {
+  DeployReport,
+  UpdateMaxParticipantsReport,
+} from "../utils/reports";
 
 const updateMaxParticipants = async (
   {
@@ -26,6 +21,7 @@ const updateMaxParticipants = async (
     const targetNetwork = hre.network;
 
     const { ethers } = hre;
+    const reports = reportFactory(targetNetwork.name);
 
     logger.info(`Updating max participants on "${targetNetwork.name}" network`);
     const [owner] = await ethers.getSigners();
@@ -40,16 +36,12 @@ const updateMaxParticipants = async (
     }
 
     // Get the deployed SYD contract address from reports
-    const deployReport = path.join(
-      reportsDir,
-      `deploy/${targetNetwork.name}.json`,
-    );
-    if (!fs.existsSync(deployReport)) {
+    const deployReport = reports.readReport<DeployReport>("deploy");
+    if (!deployReport) {
       logger.error(`No deployment found for "${targetNetwork.name}" network`);
       return;
     }
-    const deployReportData = JSON.parse(fs.readFileSync(deployReport, "utf8"));
-    const sydAddress = deployReportData.deployedAt.SureYouDo || "";
+    const sydAddress = deployReport.deployedAt.SureYouDo || "";
 
     // init the SYD contract
     const syd = SureYouDo__factory.connect(sydAddress, owner);
@@ -59,31 +51,19 @@ const updateMaxParticipants = async (
     await tnx.wait();
     logger.info(`Max participants updated successfully!`);
 
-    // Write added charity to the report, each network can have multiple charities
-    const updateMaxParticipantsReport = path.join(
-      updateMaxParticipantsReportDir,
-      `${targetNetwork.name}.json`,
-    );
-    let updateMaxParticipantsReportData = [];
-    if (fs.existsSync(updateMaxParticipantsReport)) {
-      updateMaxParticipantsReportData = JSON.parse(
-        fs.readFileSync(updateMaxParticipantsReport, "utf8"),
-      );
-    } else {
-      fs.mkdirSync(updateMaxParticipantsReportDir, { recursive: true });
-    }
-    updateMaxParticipantsReportData = [
-      ...updateMaxParticipantsReportData,
+    // Update reports
+    const updatedReport = [
+      ...(reports.readReport<UpdateMaxParticipantsReport[]>(
+        "updateMaxParticipants",
+      ) || []),
       {
         timestamp: Date.now(),
         regular,
         pro,
       },
     ];
-    fs.writeFileSync(
-      updateMaxParticipantsReport,
-      JSON.stringify(updateMaxParticipantsReportData, null, 2),
-    );
+
+    reports.writeReport("updateMaxParticipants", updatedReport);
   } catch (error) {
     logger.error(error);
   }
