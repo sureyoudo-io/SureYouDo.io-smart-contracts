@@ -9,8 +9,8 @@ winston.addColors({
 });
 
 // Custom format to include file and line number
-const customFormat = winston.format.printf(({ timestamp, level, message }) => {
-  return `${timestamp} ${level}: ${message}`;
+const customFormat = winston.format.printf(({ level, message }) => {
+  return `${level}: ${message}`;
 });
 
 // Configure logging
