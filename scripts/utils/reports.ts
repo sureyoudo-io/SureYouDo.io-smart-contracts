@@ -30,6 +30,11 @@ export type UpdateMaxParticipantsReport = {
 
 export type UpdateMinPlatformCommissionReport = UpdateMaxParticipantsReport;
 
+export type UpdateDailyRewardLimitPerUserReport = {
+  timestamp: number;
+  rewardLimit: string;
+};
+
 type ReportFactory = {
   readReport: <T>(name: string) => T | undefined;
   writeReport: <T>(name: string, data: T) => void;
