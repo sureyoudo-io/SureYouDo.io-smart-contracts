@@ -4,3 +4,4 @@ export * as setSydTokenAddress from "./setSydTokenAddress";
 export * as updateMaxParticipants from "./updateMaxParticipants";
 export * as updateMinPlatformCommission from "./updateMinPlatformCommission";
 export * as updateDailyRewardLimitPerUser from "./updateDailyRewardLimitPerUser";
+export * as updateMinimumProAccountBalance from "./updateMinimumProAccountBalance";

@@ -35,6 +35,11 @@ export type UpdateDailyRewardLimitPerUserReport = {
   rewardLimit: string;
 };
 
+export type UpdateMinimumProAccountBalanceReport = {
+  executedAt: string;
+  minBalance: string;
+};
+
 type ReportFactory = {
   readReport: <T>(name: string) => T | undefined;
   writeReport: <T>(name: string, data: T) => void;
