@@ -33,6 +33,56 @@ journey towards achieving goals even more compelling.
     npm run compile
 ```
 
+## Deployment Commands
+
+This section provides a guide on how to deploy the SureYouDo.io smart contracts on a blockchain network. It assumes that
+[the SYD token](https://github.com/sureyoudo-io/SYD-OFT-LayerZero) is already deployed on the same network and you have
+the address of the token contract.
+
+1. **Environment Setup**: Create a `.env` file in the root directory of the project. You can use the `.env.example` file
+   as a template.
+
+2. **Contract Deployment**: Deploy the contracts to the network of your choice using the following command:
+
+```bash
+npx hardhat syd:deploy --network <NETWORK>
+```
+
+3. **Set SYD Token Address**: After deployment, set the address of the SYD token contract using the following command:
+
+```bash
+npx hardhat syd:set-syd-token-address --network <NETWORK> --address <SYD_TOKEN_ADDRESS>
+```
+
+### Additional Commands
+
+- **Update Max Participants**: You can update the maximum number of participants using the following command:
+
+```bash
+npx hardhat syd:update-max-participants --network <NETWORK> --regular <REGULAR> --pro <PRO>
+```
+
+- **Update Min Platform Commission**: You can update the minimum platform commission using the following command:
+
+```bash
+npx hardhat syd:update-min-platform-commission --network <NETWORK> --regular <REGULAR> --pro <PRO>
+```
+
+- **Update Daily Reward**: You can update the daily reward using the following command:
+
+```bash
+npx hardhat syd:update-daily-reward-limit-per-user --network <NETWORK> --limit <LIMIT>
+```
+
+- **Add Charity**: You can add a charity using the following command:
+
+```bash
+npx hardhat syd:add-charity --network <NETWORK> --name <NAME> --address <ADDRESS>
+```
+
+Please replace `<NETWORK>` with the name of the network you want to deploy to, `<SYD_TOKEN_ADDRESS>` with the address of
+the SYD token contract on that network, `<REGULAR>` and `<PRO>` with the respective values for regular and pro accounts.
+
 ## Contributing
 
 We encourage public contributions! If you have a bug fix or new feature that you would like to contribute, please just
