@@ -35,7 +35,9 @@ const addCharity = async (
       deployReport.deployedAt.SydCharityManager || "";
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const SydCharityManager__factory = await import("../../typechain-types");
+    const { SydCharityManager__factory } = await import(
+      "../../typechain-types"
+    );
 
     // deploy the charity contract
     const charityManager = SydCharityManager__factory.connect(

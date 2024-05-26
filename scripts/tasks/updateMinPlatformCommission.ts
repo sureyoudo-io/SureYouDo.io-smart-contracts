@@ -36,7 +36,7 @@ const updateMinPlatformCommission = async (
     const sydAddress = deployReport.deployedAt.SureYouDo || "";
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const SureYouDo__factory = await import("../../typechain-types");
+    const { SureYouDo__factory } = await import("../../typechain-types");
 
     // init the SYD contract
     const syd = SureYouDo__factory.connect(sydAddress, owner);
