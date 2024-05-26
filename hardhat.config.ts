@@ -41,6 +41,16 @@ if (!isRunningInGithubActions) {
       url: process.env.BSC_MAINNET_RPC_URL || "",
       accounts,
     },
+
+    AVALANCHE_MAINNET: {
+      url: process.env.AVALANCHE_MAINNET_RPC_URL || "",
+      accounts,
+    },
+
+    POLYGON_MAINNET: {
+      url: process.env.POLYGON_MAINNET_RPC_URL || "",
+      accounts,
+    },
   };
 }
 
