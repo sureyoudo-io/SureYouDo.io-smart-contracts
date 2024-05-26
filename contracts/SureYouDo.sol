@@ -113,6 +113,7 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     uint32 public minPlatformCommissionProAccount; // 0% commission for pro accounts
     address public sydTokenAddress;
     uint256 public minimumProAccountBalance;
+    uint256 public sydTotalSupply;
 
 
     ISydCharityManager private charityManager;
@@ -139,7 +140,10 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     function initialize(address _charityManagerAddress, address _challengeManagerAddress) external onlyOwner {
         maxParticipants = 2;
         maxParticipantsProAccount = 4;
-        minimumProAccountBalance = 10 ether;
+        minimumProAccountBalance = 100 ether;
+
+        // 10M SYD tokens will be minted on platform's launch
+        sydTotalSupply = 10_000_000 ether;
 
         charityManager = ISydCharityManager(_charityManagerAddress);
         challengeManager = ISydChallengeManager(_challengeManagerAddress);
@@ -223,6 +227,16 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     function updateDailyRewardLimitPerUser(uint256 newRewardLimit) external onlyOwner {
         if (newRewardLimit != rewardLimitPerDayPerWallet) {
             rewardLimitPerDayPerWallet = newRewardLimit;
+        }
+    }
+
+    /**
+     * @notice Updates the total supply of SYD tokens.
+     * @param newSydTotalSupply The new total supply of SYD tokens.
+     */
+    function updateSydTotalSupply(uint256 newSydTotalSupply) external onlyOwner {
+        if (newSydTotalSupply != sydTotalSupply) {
+            sydTotalSupply = newSydTotalSupply;
         }
     }
 
@@ -672,7 +686,7 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
 
         // calculate the collectable value for the enrollment
         uint256 collectableAmount = (communityDistributionEvents[eventId].totalValueToDistribute * amount) /
-            communityDistributionEvents[eventId].expectedSydLock;
+                            communityDistributionEvents[eventId].expectedSydLock;
         communityDistributionEvents[eventId].finalValueToDistribute += collectableAmount;
 
         // lock the syd
@@ -764,15 +778,15 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     function getLockDetails(uint64 challengeId, address user) external view returns (SydStructures.LockDetails memory) {
         return
             SydStructures.LockDetails(
-                lockAmount[challengeId][user],
-                lockTimes[challengeId][user],
-                lockedTokens[challengeId][user],
-                lockHasAvailableValue[challengeId][user],
-                winAmounts[challengeId][user],
-                unlockedAmounts[challengeId][user],
-                lastWithdrawals[challengeId][user],
-                totalWithdrawals[challengeId][user]
-            );
+            lockAmount[challengeId][user],
+            lockTimes[challengeId][user],
+            lockedTokens[challengeId][user],
+            lockHasAvailableValue[challengeId][user],
+            winAmounts[challengeId][user],
+            unlockedAmounts[challengeId][user],
+            lastWithdrawals[challengeId][user],
+            totalWithdrawals[challengeId][user]
+        );
     }
 
     function _lockERC20Token(uint64 challengeId, address tokenToLock, uint256 valuePromised) internal {
@@ -949,8 +963,8 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     }
 
     function _sendChallengeVerifierReward(address verifierAddress) internal {
-        // amount is 0.000003% of the total supply
-        uint256 amount = (_sydTotalSupply() * 3) / 10 ** 6;
+        // amount is 0.000003 of the total supply
+        uint256 amount = (sydTotalSupply * 3) / 10 ** 6;
 
         // double the reward if the verifier is a pro account
         if (_isProAccount(verifierAddress)) {
@@ -961,9 +975,8 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     }
 
     function _sendChallengeParticipantReward(address participantAddress) internal {
-        // amount is 0.000002% of the total supply
-        uint256 amount = (_sydTotalSupply() * 2) / 10 ** 6;
-
+        // amount is 0.000002 of the total supply
+        uint256 amount = (sydTotalSupply * 2) / 10 ** 6;
         // double the reward if the participant is a pro account
         if (_isProAccount(participantAddress)) {
             amount *= 2;
@@ -1023,7 +1036,8 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
     }
 
     function _calcExpectedSydToLockAndBurn() internal view returns (uint256) {
-        return (_sydTotalSupply() * 2) / 1000;
+        // Expected max SYD to lock and burn is 0.002 of the total supply per event
+        return (sydTotalSupply * 2) / 1000;
     }
 
     function _isProAccount(address account) internal view returns (bool) {
@@ -1032,10 +1046,6 @@ contract SureYouDo is AllowedTokensManager, ReentrancyGuard {
 
     function _balanceOfSyd(address account) internal view returns (uint256) {
         return ISYD(sydTokenAddress).balanceOf(account);
-    }
-
-    function _sydTotalSupply() internal view returns (uint256) {
-        return ISYD(sydTokenAddress).totalSupply();
     }
 
     /**

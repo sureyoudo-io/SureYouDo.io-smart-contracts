@@ -106,7 +106,7 @@ const deployContracts = async () => {
     "SureYouDo.io",
     "SYD",
     [owner.address, sureYouDo.target],
-    [ethers.parseEther("50000"), ethers.parseEther("50000")],
+    [ethers.parseEther("500000"), ethers.parseEther("500000")],
   );
 
   // set the syd token address in the main contract
@@ -715,7 +715,7 @@ describe("SureYouDo", () => {
           await sydToken.transfer(addr2.address, ethers.parseEther("100"));
 
           expect(await sureYouDo.minimumProAccountBalance()).to.equal(
-            ethers.parseEther("10"),
+            ethers.parseEther("100"),
           );
 
           await expect(
@@ -2309,7 +2309,7 @@ describe("SureYouDo", () => {
 
           // update daily reward limit
           await sureYouDo.updateDailyRewardLimitPerUser(
-            ethers.parseEther("0.6"),
+            ethers.parseEther("60"),
           );
 
           // user creates two challenges at the same day
@@ -2333,7 +2333,7 @@ describe("SureYouDo", () => {
 
           // expect creator to get the reward of the first challenge only
           expect(creatorBalanceAfter - creatorBalanceBefore).to.equal(
-            ethers.parseEther("0.4"),
+            ethers.parseEther("40"),
           );
         });
       });
@@ -2813,7 +2813,7 @@ describe("SureYouDo", () => {
 
           expect(
             ethers.formatEther(verifierBalanceAfter - verifierBalanceBefore),
-          ).to.equal("0.3"); // ~ 0.3 SYD
+          ).to.equal("30.0"); // ~ 30 SYD
         });
 
         it("Should mind doubled reward when verifier is a pro-account", async () => {
@@ -2853,7 +2853,7 @@ describe("SureYouDo", () => {
 
           expect(
             ethers.formatEther(verifierBalanceAfter - verifierBalanceBefore),
-          ).to.equal("0.6"); // ~ 0.6 SYD
+          ).to.equal("60.0"); // ~ 60.0 SYD
         });
       });
     });
@@ -3088,7 +3088,7 @@ describe("SureYouDo", () => {
           expect(
             ethers.formatEther(verifierBalanceAfter - verifierBalanceBefore),
           ).to.equal(
-            "0.3", // ~ 0.3 SYD
+            "30.0", // ~ 30.0 SYD
           );
         });
       });
@@ -3178,7 +3178,7 @@ describe("SureYouDo", () => {
         // add tstToken to allowed-tokens list
         await sureYouDo.addAllowedToken(tstToken.target, true);
 
-        // transfer 100 SYD to creator to make him a pro-account
+        // transfer 1000 SYD to creator to make him a pro-account
         await sydToken.transfer(creator.address, ethers.parseEther("1000"));
 
         // creator approves token to be used
@@ -3418,23 +3418,23 @@ describe("SureYouDo", () => {
           addr4: holder2,
         } = await loadFixture(deployContracts));
 
-        // add 500 SYD to holders for testing purposes
+        // add 50000 SYD to holders for testing purposes
         await sydToken
           .connect(owner)
-          .transfer(holder1.address, ethers.parseEther("500"));
+          .transfer(holder1.address, ethers.parseEther("50000"));
         await sydToken
           .connect(owner)
-          .transfer(holder2.address, ethers.parseEther("500"));
+          .transfer(holder2.address, ethers.parseEther("50000"));
 
         // holder1 approves SYD token to be used
         await sydToken
           .connect(holder1)
-          .approve(sureYouDo.target, ethers.parseEther("500"));
+          .approve(sureYouDo.target, ethers.parseEther("50000"));
 
         // holder2 approves SYD token to be used
         await sydToken
           .connect(holder2)
-          .approve(sureYouDo.target, ethers.parseEther("500"));
+          .approve(sureYouDo.target, ethers.parseEther("50000"));
 
         // create a challenge with penalty type as ADD_TO_COMMUNITY
         await createChallengeWith(sureYouDo.connect(creator), {
@@ -3658,13 +3658,13 @@ describe("SureYouDo", () => {
                 ethers.ZeroAddress,
               );
 
-            // enroll with 500 SYD that is more than maxSydLockPerEnrollment
+            // enroll with 50000 SYD that is more than maxSydLockPerEnrollment
             await expect(
               sureYouDo
                 .connect(holder1)
                 .registerForCommunityDistributionEvent(
                   0,
-                  ethers.parseEther("500"),
+                  ethers.parseEther("50000"),
                 ),
             ).to.be.revertedWithCustomError(
               sureYouDo,
@@ -3684,21 +3684,21 @@ describe("SureYouDo", () => {
                 ethers.ZeroAddress,
               );
 
-            // holder1 with 100 SYD
+            // holder1 with 1000 SYD
             await sureYouDo
               .connect(holder1)
               .registerForCommunityDistributionEvent(
                 0,
-                ethers.parseEther("100"),
+                ethers.parseEther("1000"),
               );
 
-            // holder2 with 200 SYD
+            // holder2 with 20000 SYD
             await expect(
               sureYouDo
                 .connect(holder2)
                 .registerForCommunityDistributionEvent(
                   0,
-                  ethers.parseEther("200"),
+                  ethers.parseEther("20000"),
                 ),
             ).to.be.revertedWithCustomError(sureYouDo, "MaxSydLockReached");
           });
@@ -3710,9 +3710,9 @@ describe("SureYouDo", () => {
             .connect(owner)
             .initiateCommunityDistributionEvent(10, 1, 100, ethers.ZeroAddress);
 
-          // expect creator to have 0.2 SYD after finalizing the challenge
+          // expect creator to have 2 SYD after finalizing the challenge
           expect(await sydToken.balanceOf(creator.address)).to.equal(
-            ethers.parseEther("0.2"),
+            ethers.parseEther("20"),
           );
 
           // expect to have 0 locked SYD
@@ -3946,11 +3946,11 @@ describe("SureYouDo", () => {
           // expect final value to distribute to be 4.049 SYD as holders did not enroll with maximum capacity
           const event = await sureYouDo.communityDistributionEvents(0);
           expect(event.finalValueToDistribute).to.be.closeTo(
-            ethers.parseEther("4.049"),
-            ethers.parseEther("0.001"),
+            ethers.parseEther("0.0405"),
+            ethers.parseEther("0.0001"),
           );
 
-          const expectedCollectableValue = ethers.parseEther("2.024"); // for each holder for 50SYD lock
+          const expectedCollectableValue = ethers.parseEther("0.02024"); // for each holder for 50SYD lock
 
           const holder1BalanceBefore =
             await ethers.provider.getBalance(holder1);
@@ -4123,23 +4123,23 @@ describe("SureYouDo", () => {
           addr4: holder2,
         } = await loadFixture(deployContracts));
 
-        // add 500 SYD to holders for testing purposes
+        // add 50000 SYD to holders for testing purposes
         await sydToken
           .connect(owner)
-          .transfer(holder1.address, ethers.parseEther("500"));
+          .transfer(holder1.address, ethers.parseEther("50000"));
         await sydToken
           .connect(owner)
-          .transfer(holder2.address, ethers.parseEther("500"));
+          .transfer(holder2.address, ethers.parseEther("50000"));
 
         // holder1 approves SYD token to be used
         await sydToken
           .connect(holder1)
-          .approve(sureYouDo.target, ethers.parseEther("500"));
+          .approve(sureYouDo.target, ethers.parseEther("50000"));
 
         // holder2 approves SYD token to be used
         await sydToken
           .connect(holder2)
-          .approve(sureYouDo.target, ethers.parseEther("500"));
+          .approve(sureYouDo.target, ethers.parseEther("50000"));
 
         // add tstToken to allowed-tokens list
         await sureYouDo.addAllowedToken(tstToken.target, false);
@@ -4341,11 +4341,11 @@ describe("SureYouDo", () => {
           // expect final value to distribute to be 4.049 SYD as holders did not enroll with maximum capacity
           const event = await sureYouDo.communityDistributionEvents(0);
           expect(event.finalValueToDistribute).to.be.closeTo(
-            ethers.parseEther("4.049"),
+            ethers.parseEther("0.0405"),
             ethers.parseEther("0.001"),
           );
 
-          const expectedCollectableValue = ethers.parseEther("2.024"); // for each holder for 50SYD lock
+          const expectedCollectableValue = ethers.parseEther("0.0204"); // for each holder for 50SYD lock
 
           const holder1BalanceBefore = await tstToken.balanceOf(holder1);
           const holder2BalanceBefore = await tstToken.balanceOf(holder2);
