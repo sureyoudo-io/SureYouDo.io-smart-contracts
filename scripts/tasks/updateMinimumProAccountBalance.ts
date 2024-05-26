@@ -3,16 +3,14 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import logger from "../utils/logger";
 import reportFactory, {
   type DeployReport,
-  type UpdateMinPlatformCommissionReport,
+  type UpdateMinimumProAccountBalanceReport,
 } from "../utils/reports";
 
-const updateMinPlatformCommission = async (
+const updateMinimumProAccountBalance = async (
   {
-    regular,
-    pro,
+    minBalance,
   }: {
-    regular: string;
-    pro: string;
+    minBalance: string;
   },
   hre: HardhatRuntimeEnvironment,
 ): Promise<void> => {
@@ -23,7 +21,7 @@ const updateMinPlatformCommission = async (
     const reports = reportFactory(targetNetwork.name);
 
     logger.info(
-      `Updating min platform commission on "${targetNetwork.name}" network`,
+      `Updating the minimum Pro account SYD balance to ${minBalance} on "${targetNetwork.name}" network`,
     );
     const [owner] = await ethers.getSigners();
 
@@ -42,32 +40,29 @@ const updateMinPlatformCommission = async (
     const syd = SureYouDo__factory.connect(sydAddress, owner);
 
     // update the min platform commission in the main contract
-    const tnx = await syd.updateMinPlatformCommission(regular, pro);
+    const tnx = await syd.updateMinimumProAccountBalance(minBalance);
     await tnx.wait();
-    logger.info("Min platform commission updated successfully!");
+    logger.info("Minimum Pro account SYD balance updated successfully");
 
     // Update reports
     const updatedReport = [
-      ...(reports.readReport<UpdateMinPlatformCommissionReport[]>(
-        "updateMinPlatformCommission",
+      ...(reports.readReport<UpdateMinimumProAccountBalanceReport[]>(
+        "updateMinimumProAccountBalance",
       ) || []),
       {
         executedAt: new Date().toISOString(),
-        regular,
-        pro,
+        minBalance,
       },
     ];
 
-    reports.writeReport("updateMinPlatformCommission", updatedReport);
+    reports.writeReport("updateMinimumProAccountBalance", updatedReport);
   } catch (error) {
     logger.error(error);
   }
 };
 
 task(
-  "syd:update-min-platform-commission",
-  "Update the min platform commission",
-  updateMinPlatformCommission,
-)
-  .addParam("regular", "The new max participants value for regular accounts")
-  .addParam("pro", "The new max participants value for Pro accounts");
+  "syd:update-minimum-pro-account-balance",
+  "Update the minimum Pro account SYD balance",
+  updateMinimumProAccountBalance,
+).addParam("minBalance", "The minimum SYD amount per user");
