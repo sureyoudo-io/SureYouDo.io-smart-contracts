@@ -1,6 +1,5 @@
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { SydCharityManager__factory } from "../../typechain-types";
 import logger from "../utils/logger";
 import reportFactory, {
   AddCharityReport,
@@ -34,6 +33,9 @@ const addCharity = async (
     }
     const charityManagerAddress =
       deployReport.deployedAt.SydCharityManager || "";
+
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SydCharityManager__factory = await import("../../typechain-types");
 
     // deploy the charity contract
     const charityManager = SydCharityManager__factory.connect(

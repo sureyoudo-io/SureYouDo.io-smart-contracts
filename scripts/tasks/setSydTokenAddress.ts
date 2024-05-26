@@ -1,6 +1,5 @@
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { SureYouDo__factory } from "../../typechain-types";
 import logger from "../utils/logger";
 import reportFactory, {
   type DeployReport,
@@ -27,6 +26,9 @@ const setSydTokenAddress = async (
     // Get the deployed SYD contract address from reports
     const deployReportData = reports.readReport<DeployReport>("deploy");
     const sydAddress = deployReportData?.deployedAt.SureYouDo || "";
+
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SureYouDo__factory = await import("../../typechain-types");
 
     // init the SYD contract
     const syd = SureYouDo__factory.connect(sydAddress, owner);
